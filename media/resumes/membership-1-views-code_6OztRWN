@@ -1,0 +1,194 @@
+** models.py code ->
+
+class MembershipPlan(models.Model):
+    PLAN_CHOICES = [
+        ('standard', 'Standard'),
+        ('gold', 'Gold'),
+        ('diamond', 'Diamond'),
+    ]
+
+    name = models.CharField(max_length=20, choices=PLAN_CHOICES, unique=True)
+    price = models.DecimalField(max_digits=6, decimal_places=2, default=0.00)
+    job_postings = models.PositiveIntegerField(default=0)
+    featured_jobs = models.PositiveIntegerField(default=0)
+    job_duration_days = models.PositiveIntegerField(default=30)
+
+    def __str__(self):
+        return self.get_name_display()
+
+class UserSubscription(models.Model):
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    current_plan = models.ForeignKey(MembershipPlan, on_delete=models.SET_NULL, null=True, blank=True)
+    renewal_date = models.DateField(default=timezone.now)
+    active = models.BooleanField(default=True)
+    plan = models.CharField(max_length=15, default='Standard')
+
+    def cancel_subscription(self):
+        self.active = False
+        self.save()
+
+    def renew_subscription(self):
+        if self.current_plan:
+            self.renewal_date = timezone.now() + timezone.timedelta(days=30)
+            self.save()
+
+    def __str__(self):
+        return f"{self.user.username} - {self.current_plan.name if self.current_plan else 'No Plan'}"
+
+** forms.py code ->
+
+class SubscriptionForm(forms.ModelForm):
+    class Meta:
+        model = UserSubscription
+        fields = ['plan']
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields['plan'].queryset = MembershipPlan.objects.all()
+
+    def save(self, user):
+        subscription = UserSubscription.objects.get_or_create(user=user)
+
+        selected_plan = self.cleaned_data['current_plan']
+        subscription.current_plan = selected_plan
+        subscription.renewal_date = timezone.now() + timezone.timedelta(days=30)
+        subscription.active = True
+        subscription.save()
+        return subscription
+
+class CancelSubscriptionForm(forms.Form):
+    confirm_cancel = forms.BooleanField(
+        label="Are you sure you want to cancel your subscription?",
+        required=True
+    )
+
+    def cancel_subscription(self, user):
+        subscription = UserSubscription.objects.get(user=user)
+        if subscription.active:
+            subscription.cancel_subscription()
+
+class Membershipform(forms.ModelForm):
+    class Meta:
+        model = MembershipPlan
+        fields = '__all__'
+
+** admin.py code ->
+
+admin.site.register(MembershipPlan)
+
+
+** urls.py code ->
+
+    path('choose-plan/', views.choose_plan, name='choose_plan'),
+    path('cancel-plan/', views.cancel_plan, name='cancel_plan'),
+    path('subscription/', views.subscription_detail, name='subscription_detail'),
+
+** views.py code ->
+
+@csrf_exempt
+@login_required
+def choose_plan(request):
+    try:
+        subscription = UserSubscription.objects.get_or_create(user=request.user)
+
+        if request.method == 'POST':
+            form = SubscriptionForm(request.POST)
+            if form.is_valid():
+                plan_id = form.cleaned_data['plan']
+                membership_plan = MembershipPlan.objects.get(id=plan_id)
+
+                subscription.current_plan = membership_plan
+                subscription.save()
+
+                return JsonResponse({'message': 'Subscription plan updated successfully'}, status=200)
+            else:
+                return JsonResponse({'errors': form.errors}, status=400)
+        else:
+            initial_plan = subscription.current_plan if subscription.current_plan in MembershipPlan.objects.all() else None
+            form = SubscriptionForm(initial={'plan': initial_plan})
+
+            plan_choices = [{'id': plan.id, 'name': plan.name} for plan in form.fields['plan'].queryset]
+
+            return JsonResponse({
+                'message': 'Choose a plan',
+                'current_plan': subscription.current_plan.name if subscription.current_plan else None,
+                'plan_choices': plan_choices
+            })
+
+    except DatabaseError as db_err:
+        return JsonResponse({'error': 'Database error occurred', 'details': str(db_err)}, status=500)
+    except MembershipPlan.DoesNotExist:
+        return JsonResponse({'error': 'Selected plan does not exist'}, status=400)
+    except Exception as e:
+        return JsonResponse({'error': 'An unexpected error occurred', 'details': str(e)}, status=500)
+
+@csrf_exempt
+@login_required
+def cancel_plan(request):
+    try:
+        subscription = get_object_or_404(UserSubscription, user=request.user)
+
+        if request.method == 'POST':
+            form = CancelSubscriptionForm(request.POST)
+            if form.is_valid():
+                form.cancel_subscription(user=request.user)
+                return JsonResponse({'message': 'Subscription cancelled successfully'}, status=200)
+            else:
+                return JsonResponse({'errors': form.errors}, status=400)
+        else:
+            return JsonResponse({
+                'message': 'Confirm cancellation',
+                'current_plan': subscription.current_plan.name if subscription.current_plan else 'No Plan',
+                'active': subscription.active
+            })
+
+    except DatabaseError as db_err:
+        return JsonResponse({'error': 'Database error occurred', 'details': str(db_err)}, status=500)
+    except Exception as e:
+        return JsonResponse({'error': 'An unexpected error occurred', 'details': str(e)}, status=500)
+
+@login_required
+def subscription_detail(request):
+    try:
+        subscription = get_object_or_404(UserSubscription, user=request.user)
+
+        subscription_data = {
+            'plan_name': subscription.current_plan.name if subscription.current_plan else 'No Plan',
+            'renewal_date': subscription.renewal_date,
+            'active': subscription.active,
+        }
+
+        return JsonResponse(subscription_data, status=200)
+
+    except DatabaseError as db_err:
+        return JsonResponse({'error': 'Database error occurred', 'details': str(db_err)}, status=500)
+    except Exception as e:
+        return JsonResponse({'error': 'An unexpected error occurred', 'details': str(e)}, status=500)
+
+
+** Postman Request ->
+
+1) CHOOSE PLAN ->
+
+   URL - http://127.0.0.1:8000/choose-plan/  (GET and POST)
+
+   POST - body -> form-data -> plan = 1
+
+2) CANCEL PLAN ->
+ 
+   URL - http://127.0.0.1:8000/cancel-plan/ (GET and POST) 
+   
+   POST - body -> form-data -> confirm_cancel = true
+
+3) GET SUBSCRIPTION -> 
+  
+  URL - http://127.0.0.1:8000/subscription/ (GET)
+ 
+
+
+
+
+
+
+
+

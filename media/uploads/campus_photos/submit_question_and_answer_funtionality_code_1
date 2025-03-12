@@ -1,0 +1,96 @@
+Models.py code:
+==============
+class Question(models.Model):
+    text = models.TextField()
+    answer = models.TextField(blank=True, null=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return self.text[:50] 
+		
+================	
+Forms.py code:
+=============
+
+class QuestionForm(forms.ModelForm):
+    class Meta:
+        model = Question
+        fields = ['text']
+		
+
+class AnswerForm(forms.ModelForm):
+    class Meta:
+        model = Question
+        fields = ['answer']
+		
+==========================	
+views.py codes:
+=============
+
+@csrf_exempt
+def submit_question(request):
+    if request.method == "POST":
+        try:
+            data = json.loads(request.body.decode('utf-8'))
+        except json.JSONDecodeError:
+            return JsonResponse({"error": "Invalid JSON format"}, status=400)
+
+        form = QuestionForm(data)
+        if form.is_valid():
+            question = form.save()
+            return JsonResponse({"message": "Question saved successfully!", "id": question.id}, status=201)
+
+        return JsonResponse({"error": "Invalid data", "details": form.errors}, status=400)
+
+    return JsonResponse({"error": "Invalid request method"}, status=405)
+	
+	
+@csrf_exempt
+def submit_answer(request, question_id):
+    if request.method == "POST":
+        try:
+            data = json.loads(request.body.decode('utf-8'))
+        except json.JSONDecodeError:
+            return JsonResponse({"error": "Invalid JSON format"}, status=400)
+
+        try:
+            question = Question.objects.get(id=question_id)
+        except Question.DoesNotExist:
+            return JsonResponse({"error": "Question not found"}, status=404)
+
+        form = AnswerForm(data, instance=question)
+        if form.is_valid():
+            form.save()
+            return JsonResponse({"message": "Answer saved successfully!", "id": question.id}, status=200)
+
+        return JsonResponse({"error": "Invalid data", "details": form.errors}, status=400)
+
+    return JsonResponse({"error": "Invalid request method"}, status=405)
+	
+	
+=================================
+App urls.py code:
+================
+
+path('submit-question/', views.submit_question, name='submit-question'),
+path('submit-answer/<int:question_id>/', views.submit_answer, name='submit-answer'),
+
+========================================================
+postman:
+=======
+http://127.0.0.1:8000/submit-question/ (post method)
+
+
+{
+    "text": "What is Java?"
+}
+
+
+
+http://127.0.0.1:8000/submit-answer/8/ (post method)
+
+
+{
+    "answer": "Java is a programming language"
+}
+=========================================================================================

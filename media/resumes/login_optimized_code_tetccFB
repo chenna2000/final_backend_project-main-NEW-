@@ -1,0 +1,72 @@
+views.py code:
+=============
+@csrf_protect
+def search(request):
+    api_key = 'f120cebcf2a4379d72b80691ed4fe25bfc7443b11ce3739e6ee7e1bb790923505b48f76881878ee5f8f6af795bfc2c0be5c7d130dc820f3503bf58cced23e7c8462c10cf656a865164d8a6546f14a10f9c0bd31ed348f8774e6b47cb930a6266e13479cbf80f0a6e6c888e2c01696a0cd94b0b6d2da1dbc9eebc862985cdf64b'
+    query = request.GET.get('q', '').lower()
+    page = request.GET.get('page', 1)
+    per_page = request.GET.get('per_page', 10)
+    headers = {'Authorization': f'Bearer {api_key}'}
+
+    apis = {
+        'http://195.35.22.140:1337/api/abroad-exams': '/abroad-exam/{id}',
+        'http://195.35.22.140:1337/api/bank-loans': '/bank-loan/{id}',
+        'http://195.35.22.140:1337/api/do-and-donts': '/do-and-dont/{id}',
+        'http://195.35.22.140:1337/api/exam-categories': '/exam-category/{id}',
+        'http://195.35.22.140:1337/api/faqs': '/faq/{id}',
+        'http://195.35.22.140:1337/api/general-instructions': '/general-instruction/{id}',
+        'http://195.35.22.140:1337/api/instructions-and-navigations': '/instruction-and-navigation/{id}',
+        'http://195.35.22.140:1337/api/practice-questions': '/practice-question/{id}',
+        'http://195.35.22.140:1337/api/q-and-as': '/q-and-a/{id}',
+        'http://195.35.22.140:1337/api/rules': '/rule/{id}',
+        'http://195.35.22.140:1337/api/test-series-faqs': '/test-series-faq/{id}',
+        'http://195.35.22.140:1337/api/college-infos?populate=*': '/college/{id}'
+    }
+
+    combined_result = []
+    
+    for api, path_template in apis.items():
+        try:
+            response = requests.get(api, headers=headers, timeout=9000)
+            response.raise_for_status()
+            api_data = response.json().get('data', [])
+            for item in api_data:
+                item['path'] = path_template.format(id=item['id'])
+                combined_result.append(item)
+        except requests.RequestException as e:
+            return JsonResponse({'error': f'Error fetching API {api}: {e}'}, status=500)
+
+    matching_objects = [data for data in combined_result if query in json.dumps(data).lower()]
+    
+    paginator = Paginator(matching_objects, per_page)
+    try:
+        results = paginator.page(page)
+    except PageNotAnInteger:
+        results = paginator.page(1)
+    except EmptyPage:
+        results = paginator.page(paginator.num_pages)
+
+    paginated_response = {
+        'total_results': paginator.count,
+        'total_pages': paginator.num_pages,
+        'current_page': results.number,
+        'results': results.object_list
+    }
+
+    return JsonResponse(paginated_response, safe=False)
+
+node:
+====
+1.Error Handling:
+
+Added response.raise_for_status() to raise an error if the request fails. This improves error handling by making it explicit where the failure occurred.
+
+2.Lowercase Query:
+Moved the query.lower() to the top to ensure the comparison is case-insensitive right from the start.
+
+3.Avoid Redundant Code:Combined the exception handling for API requests into one section to avoid redundancy.
+
+4.Readability:Kept the structure of the function largely the same to maintain your logic while enhancing readability and performance.
+Performance:
+
+5.Using list comprehension for filtering matching objects is generally faster and more concise.

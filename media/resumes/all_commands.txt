@@ -1,0 +1,196 @@
+** Package versions -> 
+
+asgiref 3.8.1
+async-timeout 4.0.3
+CacheControl 0.14.0
+cachetools 5.3.3
+certifi 2024.2.2
+cffi 1.16.0
+charset-normalizer 3.3.2
+cryptography 42.0.5
+defusedxml 0.7.1
+Django 4.2.11
+django-allauth 0.63.3
+django-elasticsearch-dsl 8.0
+django-redis 5.4.0
+djangorestframework 3.15.1
+elastic-transport 8.13.0
+elasticsearch 8.14.0
+elasticsearch-dsl 8.13.0
+firebase-admin 6.5.0
+google-api-core 2.19.0
+google-api-python-client 2.133.0
+google-auth 2.30.0
+google-auth-httplib2 0.2.0
+google-auth-oauthlib 1.2.0
+google-cloud-core 2.4.1
+google-cloud-firestore 2.16.0
+google-cloud-storage 2.17.0
+google-crc32c 1.5.0
+google-resumable-media 2.7.1
+googleapis-common-protos 1.63.1
+grpcio 1.64.1
+grpcio-status 1.62.2
+httplib2 0.22.0
+idna 3.7
+msgpack 1.0.8
+mysqlclient 2.2.4
+oauthlib 3.2.2
+pillow 10.3.0
+pip 24.1.1
+proto-plus 1.23.0
+protobuf 4.25.3
+pyasn1 0.6.0
+pyasn1_modules 0.4.0
+pycparser 2.21
+PyJWT 2.8.0
+pyparsing 3.1.2
+python-dateutil 2.9.0.post0
+python-dotenv 1.0.1
+python3-openid 3.2.0
+PyYAML 6.0.1
+redis 5.0.3
+requests 2.32.0
+requests-oauthlib 2.0.0
+rsa 4.9
+six 1.16.0
+social-auth-app-django 5.4.1
+social-auth-core 4.5.4
+sqlparse 0.4.4
+typing_extensions 4.10.0
+tzdata 2024.1
+uritemplate 4.1.1
+urllib3 2.2.1
+wheel 0.43.0
+
+
+** UNINSTALL COMMANDS ->
+
+pip uninstall asgiref -y
+pip uninstall async-timeout -y
+pip uninstall CacheControl -y
+pip uninstall cachetools -y
+pip uninstall certifi -y
+pip uninstall cffi -y
+pip uninstall charset-normalizer -y
+pip uninstall cryptography -y
+pip uninstall defusedxml -y
+pip uninstall Django -y
+pip uninstall django-allauth -y
+pip uninstall django-elasticsearch-dsl -y
+pip uninstall django-redis -y
+pip uninstall djangorestframework -y
+pip uninstall elastic-transport -y
+pip uninstall elasticsearch -y
+pip uninstall elasticsearch-dsl -y
+pip uninstall firebase-admin -y
+pip uninstall google-api-core -y
+pip uninstall google-api-python-client -y
+pip uninstall google-auth -y
+pip uninstall google-auth-httplib2 -y
+pip uninstall google-auth-oauthlib -y
+pip uninstall google-cloud-core -y
+pip uninstall google-cloud-firestore -y
+pip uninstall google-cloud-storage -y
+pip uninstall google-crc32c -y
+pip uninstall google-resumable-media -y
+pip uninstall googleapis-common-protos -y
+pip uninstall grpcio -y
+pip uninstall grpcio-status -y
+pip uninstall httplib2 -y
+pip uninstall idna -y
+pip uninstall msgpack -y
+pip uninstall mysqlclient -y
+pip uninstall oauthlib -y
+pip uninstall pillow -y
+pip uninstall pip -y
+pip uninstall proto-plus -y
+pip uninstall protobuf -y
+pip uninstall pyasn1 -y
+pip uninstall pyasn1_modules -y
+pip uninstall pycparser -y
+pip uninstall PyJWT -y
+pip uninstall pyparsing -y
+pip uninstall python-dateutil -y
+pip uninstall python-dotenv -y
+pip uninstall python3-openid -y
+pip uninstall PyYAML -y
+pip uninstall redis -y
+pip uninstall requests -y
+pip uninstall requests-oauthlib -y
+pip uninstall rsa -y
+pip uninstall six -y
+pip uninstall social-auth-app-django -y
+pip uninstall social-auth-core -y
+pip uninstall sqlparse -y
+pip uninstall typing_extensions -y
+pip uninstall tzdata -y
+pip uninstall uritemplate -y
+pip uninstall urllib3 -y
+pip uninstall wheel -y
+
+
+** INSTALL COMMANDS ->
+
+pip install asgiref==3.8.1
+pip install async-timeout==4.0.3
+pip install CacheControl==0.14.0
+pip install cachetools==5.3.3
+pip install certifi==2024.2.2
+pip install cffi==1.16.0
+pip install charset-normalizer==3.3.2
+pip install cryptography==43.0.1
+pip install defusedxml==0.7.1
+pip install Django==4.2.11
+pip install django-allauth==0.63.3
+pip install django-elasticsearch-dsl==8.0
+pip install django-redis==5.4.0
+pip install djangorestframework==3.15.1
+pip install elastic-transport==8.13.0
+pip install elasticsearch==8.14.0
+pip install elasticsearch-dsl==8.13.0
+pip install firebase-admin==6.5.0
+pip install google-api-core==2.19.0
+pip install google-api-python-client==2.133.0
+pip install google-auth==2.30.0
+pip install google-auth-httplib2==0.2.0
+pip install google-auth-oauthlib==1.2.0
+pip install google-cloud-core==2.4.1
+pip install google-cloud-firestore==2.16.0
+pip install google-cloud-storage==2.17.0
+pip install google-crc32c==1.5.0
+pip install google-resumable-media==2.7.1
+pip install googleapis-common-protos==1.63.1
+pip install grpcio==1.64.1
+pip install grpcio-status==1.62.2
+pip install httplib2==0.22.0
+pip install idna==3.7
+pip install msgpack==1.0.8
+pip install mysqlclient==2.2.4
+pip install oauthlib==3.2.2
+pip install pillow==10.3.0
+pip install pip==24.1.1
+pip install proto-plus==1.23.0
+pip install protobuf==4.25.3
+pip install pyasn1==0.6.0
+pip install pyasn1_modules==0.4.0
+pip install pycparser==2.21
+pip install PyJWT==2.8.0
+pip install pyparsing==3.1.2
+pip install python-dateutil==2.9.0.post0
+pip install python-dotenv==1.0.1
+pip install python3-openid==3.2.0
+pip install PyYAML==6.0.1
+pip install redis==5.0.3
+pip install requests==2.32.0
+pip install requests-oauthlib==2.0.0
+pip install rsa==4.9
+pip install six==1.16.0
+pip install social-auth-app-django==5.4.1
+pip install social-auth-core==4.5.4
+pip install sqlparse==0.4.4
+pip install typing_extensions==4.10.0
+pip install tzdata==2024.1
+pip install uritemplate==4.1.1
+pip install urllib3==2.2.2
+pip install wheel==0.43.0

@@ -1,0 +1,297 @@
+views.py codes:
+==============
+@method_decorator(csrf_exempt, name='dispatch')
+class CollegeListCreateView(View):
+
+    def get(self, request):
+        try:
+            colleges = list(College.objects.values_list('id', 'name', 'email', 'Attachment'))  # Optimize query
+            return JsonResponse(colleges, safe=False, status=200)
+        except Exception as e:
+            return JsonResponse({'error': str(e)}, status=500)
+
+    def post(self, request):
+        try:
+            college_email = request.POST.get('email')
+            if not college_email:
+                return JsonResponse({'status': 'error', 'message': 'Email is required'}, status=400)
+
+            college = College.objects.filter(email=college_email).first()
+            college_form = CollegeForm(request.POST, request.FILES, instance=college if college else None)
+
+            if college_form.is_valid():
+                college = college_form.save()
+
+                if request.POST.get('is_deleted', 'false').lower() == 'true' and college.Attachment:
+                    attachment_path = college.Attachment.path
+                    if os.path.exists(attachment_path):
+                        os.remove(attachment_path)
+                    college.Attachment = None
+                    college.save(update_fields=['Attachment'])
+
+                    return JsonResponse({'status': 'success', 'message': 'Attachment deleted successfully', 'college_id': college.id}, status=200)
+
+                return JsonResponse({'status': 'success', 'message': 'College created successfully', 'college_id': college.id}, status=201)
+            else:
+                return JsonResponse(college_form.errors, status=400)
+
+        except Exception as e:
+            return JsonResponse({'error': str(e)}, status=500)
+
+note:
+====
+1.Optimized get(): Using values_list() to fetch only needed fields (improves performance).
+
+2.Reduced redundancy in post(): The logic for checking and saving the form is streamlined.
+
+3.Handled the attachment deletion more cleanly: update_fields prevents unnecessary saving of other fields.
+===================================================================================================
+@csrf_exempt
+def submit_enquiry(request, college_id):
+    if request.method != 'POST':
+        return JsonResponse({'error': 'Invalid request method'}, status=405)
+
+    try:
+        data = json.loads(request.body)
+    except json.JSONDecodeError:
+        return JsonResponse({'error': 'Invalid JSON'}, status=400)
+
+    required_fields = ['first_name', 'last_name', 'email', 'mobile_number', 'password']
+    if not all(data.get(field) for field in required_fields):
+        return JsonResponse({'error': 'All fields are required'}, status=400)
+
+    first_name, last_name, email, mobile_number, password = (
+        data['first_name'], data['last_name'], data['email'], data['mobile_number'], data['password']
+    )
+
+    try:
+        college = College.objects.get(id=college_id)
+    except College.DoesNotExist:
+        return JsonResponse({'error': 'Invalid college ID'}, status=400)
+
+    if StudentEnquiry.objects.filter(email=email, college=college).exists():
+        return JsonResponse({'error': 'An enquiry with this email has already been submitted for this college.'}, status=400)
+
+    hashed_password = make_password(password)
+
+    try:
+        enquiry = StudentEnquiry.objects.create(
+            first_name=first_name,
+            last_name=last_name,
+            email=email,
+            mobile_number=mobile_number,
+            password=hashed_password,
+            college=college
+        )
+        return JsonResponse({'message': 'Enquiry submitted successfully', 'enquiry_id': enquiry.id}, status=201)
+    except IntegrityError:
+        return JsonResponse({'error': 'Error while saving enquiry. Please try again.'}, status=400)
+note:
+====
+1.Reduced code repetition: Fields are accessed and validated in a single step.
+
+2.Moved POST check at the start: Short-circuits unnecessary code execution.
+
+3.More targeted field validation: Ensured all required fields are present in a more readable way.
+
+4.Exception handling: Added specific exceptions like JSONDecodeError and IntegrityError to give clearer feedback.
+
+=========================================================================================================
+@csrf_exempt
+def college_status_counts(request):
+    college_id = request.GET.get('college_id')
+    
+    if not college_id:
+        return JsonResponse({'error': 'college_id is required'}, status=400)
+    
+    try:
+        college_id = int(college_id)
+    except ValueError:
+        return JsonResponse({'error': 'Invalid college_id. It must be an integer.'}, status=400)
+
+    try:
+        enquiry_count = StudentEnquiry.objects.filter(college_id=college_id).count()
+        job_posted_count = Job1.objects.filter(college_id=college_id).count()
+        total_visitor_count = Visitor.objects.filter(college_id=college_id).count()
+        shortlisted_count = Application1.objects.filter(job__college_id=college_id, status='shortlisted').count()
+
+        return JsonResponse({
+            'total_visitor_count': total_visitor_count,
+            'shortlisted_count': shortlisted_count,
+            'job_posted_count': job_posted_count,
+            'enquiry_count': enquiry_count
+        }, status=200)
+
+    except Exception as e:
+        return JsonResponse({'error': str(e)}, status=500)
+
+note:
+====
+1.Combined integer validation early: The college_id is validated immediately to prevent unnecessary database queries.(Optimize: Reduce database queries and run them only once)
+
+2.Simplified the structure: Removed the DoesNotExist handling for StudentEnquiry, since you're counting records, not retrieving a specific object.
+
+3.Efficient error handling: A generic exception block ensures any unexpected issues are caught.
+
+=========================================================================================================
+
+@csrf_exempt
+def apply__college_job(request, job_id):
+    if request.method != 'POST':
+        return JsonResponse({'error': 'Method not allowed'}, status=405)
+
+    try:
+        json_data = json.loads(request.POST.get('data', '{}'))
+        job = get_object_or_404(Job1, id=job_id)
+
+        form = Application1Form(json_data, request.FILES)
+        if form.is_valid():
+            application = form.save(commit=False)
+            application.job = job
+
+            job_skills = set(job.skills.split(', '))
+            candidate_skills = set(json_data.get('skills', '').split(', '))
+            application.skills = ', '.join(candidate_skills)
+
+            if not job_skills.intersection(candidate_skills):
+                return JsonResponse({'message': 'Candidate is not eligible to apply'}, status=404)
+
+            application.save()
+            return JsonResponse({'message': 'Application submitted successfully', 'application_id': application.id}, status=201)
+
+        return JsonResponse({'errors': form.errors}, status=400)
+
+    except json.JSONDecodeError:
+        return JsonResponse({'error': 'Invalid JSON data'}, status=400)
+    except Exception as e:
+        return JsonResponse({'error': str(e)}, status=500)
+note:
+====
+1.Simplified method check: Directly checking for POST method at the start to reduce indentation.
+
+2.Handled missing or malformed JSON: Added explicit JSONDecodeError handling for invalid JSON data.
+
+3.Simplified skills handling: Removed unnecessary temporary variables and kept the skills assignment concise.
+
+4.Unified error response: More efficient error handling with a dedicated JSONDecodeError block.
+
+========================================================================================================
+@csrf_exempt
+def register_visitor(request, college_id):
+    if request.method != "POST":
+        return JsonResponse({'error': 'Invalid request method'}, status=405)
+
+    try:
+        data = json.loads(request.body.decode('utf-8'))
+        college = get_object_or_404(College, id=college_id)
+
+        email = data.get('email')
+        if not email:
+            return JsonResponse({'error': 'Email is required'}, status=400)
+
+        if Visitor.objects.filter(email=email, college=college).exists():
+            return JsonResponse({'error': 'Visitor already registered'}, status=400)
+
+        form = VisitorRegistrationForm(data=data)
+        if form.is_valid():
+            visitor = form.save(commit=False)
+            visitor.password = make_password(data.get('password'))
+            visitor.college = college
+            visitor.save()
+
+            return JsonResponse({'message': 'Visitor registered successfully'}, status=201)
+        else:
+            return JsonResponse({'error': form.errors}, status=400)
+
+    except json.JSONDecodeError:
+        return JsonResponse({'error': 'Invalid JSON format'}, status=400)
+    except Exception as e:
+        return JsonResponse({'error': str(e)}, status=500)
+
+note:
+====
+1.Method check moved to the top: This avoids running unnecessary code for non-POST requests.
+
+2.Simplified college lookup: Used get_object_or_404 to eliminate a separate try-except block for College.DoesNotExist.
+
+3.JSON error handling: Added JSONDecodeError to handle malformed JSON input.
+
+4.Single exception handler: Catches other general errors at the end for efficiency.
+
+5.Reduced unnecessary temporary variables: make_password and form logic are simplified.
+
+=========================================================================================================
+@csrf_exempt
+def login_visitor(request):
+    if request.method != "POST":
+        return JsonResponse({'error': 'Invalid request method'}, status=405)
+
+    try:
+        data = json.loads(request.body.decode('utf-8'))
+        email = data.get('email')
+        password = data.get('password')
+
+        if not email or not password:
+            return JsonResponse({'error': 'Email and password are required'}, status=400)
+
+        visitor = get_object_or_404(Visitor, email=email)
+
+        if check_password(password, visitor.password):
+            return JsonResponse({'message': 'Login successful'}, status=200)
+        else:
+            return JsonResponse({'error': 'Invalid credentials'}, status=400)
+
+    except json.JSONDecodeError:
+        return JsonResponse({'error': 'Invalid JSON format'}, status=400)
+    except Exception as e:
+        return JsonResponse({'error': str(e)}, status=500)
+
+note:
+====
+1.Method check at the start: This prevents unnecessary code execution if the method is not POST.
+
+2.Simplified visitor lookup: Replaced the separate try-except block with get_object_or_404 to simplify error handling.
+
+3.Consolidated error handling: Handled JSON decoding errors explicitly and kept general exceptions at the end.
+
+4.Reduced redundant checks: The presence of both email and password is validated at the beginning.
+
+======================================================================================================
+
+@csrf_exempt
+def apply__college_job(request, job_id):
+    if request.method != 'POST':
+        return JsonResponse({'error': 'Method not allowed'}, status=405)
+
+    try:
+        json_data = json.loads(request.POST.get('data', '{}'))
+        job = get_object_or_404(Job1, id=job_id)
+
+        email = json_data.get('email')
+        if not email:
+            return JsonResponse({'error': 'Email is required'}, status=400)
+
+        if Application1.objects.filter(Q(email=email) & Q(job=job)).exists():
+            return JsonResponse({'error': 'An application with this email already exists for this job.'}, status=400)
+
+        form = Application1Form(json_data, request.FILES)
+        if form.is_valid():
+            application = form.save(commit=False)
+            application.job = job
+
+            job_skills = set(job.skills.split(', '))
+            candidate_skills = set(json_data.get('skills', '').split(', '))
+            application.skills = ', '.join(candidate_skills)
+
+            if not job_skills.intersection(candidate_skills):
+                return JsonResponse({'message': 'Candidate is not eligible to apply'}, status=404)
+
+            application.save()
+            return JsonResponse({'message': 'Application submitted successfully', 'application_id': application.id}, status=201)
+
+        return JsonResponse({'errors': form.errors}, status=400)
+
+    except json.JSONDecodeError:
+        return JsonResponse({'error': 'Invalid JSON data'}, status=400)
+    except Exception as e:
+        return JsonResponse({'error': str(e)}, status=500)

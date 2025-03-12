@@ -1,0 +1,333 @@
+@csrf_exempt
+def save_student(request):
+    if request.method != 'POST':
+        return JsonResponse({'error': 'Invalid request method'}, status=405)
+
+    data = json.loads(request.body)
+    email = data.get('email')
+
+    if Student.objects.filter(email=email).exists():
+        return JsonResponse({'message': 'Student is already registered with this email'}, status=400)
+
+    form = StudentForm(data)
+    if form.is_valid():
+        student = form.save()
+        return JsonResponse({'message': 'Student data saved successfully', 'student_id': student.id}, status=201)
+
+    return JsonResponse({'errors': form.errors}, status=400)
+	
+note:
+====
+1.Reorganized the request method check to exit early if it's not POST, reducing indentation.
+
+2.Removed redundant else after the if form.is_valid() check, since an early return handles the case where the form is valid.
+==============================================================================================
+@csrf_exempt
+def apply_job(request, job_id):
+    if request.method != 'POST':
+        return JsonResponse({'error': 'Method not allowed'}, status=405)
+
+    try:
+        json_data = json.loads(request.POST.get('data', '{}'))
+        job = get_object_or_404(Job, id=job_id)
+
+        email = json_data.get('email')
+        if not email:
+            return JsonResponse({'error': 'Email is required'}, status=400)
+
+        if Application.objects.filter(email=email, job=job).exists():
+            return JsonResponse({'error': 'An application with this email already exists for this job.'}, status=400)
+
+        student = Student.objects.filter(email=email).first()
+        if not student:
+            return JsonResponse({'error': 'Student with this email does not exist'}, status=404)
+
+        form = ApplicationForm(json_data, request.FILES)
+        if form.is_valid():
+            application = form.save(commit=False)
+            application.job = job
+            application.student = student  
+
+            job_skills = set(job.skills.split(', '))
+            candidate_skills = set(json_data.get('skills', '').split(', '))
+            application.skills = ', '.join(candidate_skills)
+
+            if not job_skills.intersection(candidate_skills):
+                return JsonResponse({'message': 'Candidate is not eligible to apply'}, status=404)
+
+            application.save()
+            return JsonResponse({'message': 'Application submitted successfully', 'application_id': application.id}, status=201)
+
+        return JsonResponse({'errors': form.errors}, status=400)
+
+    except json.JSONDecodeError:
+        return JsonResponse({'error': 'Invalid JSON data'}, status=400)
+    except Exception as e:
+        return JsonResponse({'error': str(e)}, status=500)
+
+note:
+====
+1.Used Student.objects.filter().first() instead of try-except to check for the existence of the student, simplifying the logic.
+
+2.Used early return statements where appropriate to reduce nesting and improve readability.
+
+3.Removed the unnecessary nested try-except block for Student.DoesNotExist.
+=============================================================================================
+@csrf_exempt
+def schedule_interview(request):
+    if request.method != "POST":
+        return JsonResponse({'error': 'Invalid request method. Please use POST.'}, status=405)
+
+    try:
+        data = json.loads(request.body)
+
+        action = data.get('action')
+        applicant_id = data.get('applicant_id')
+        round = data.get('round')
+        interview_date = data.get('interview_date')
+
+        if not action or not applicant_id or not interview_date:
+            return JsonResponse({'error': 'action, applicant_id, and interview_date parameters are required.'}, status=400)
+
+        applicant = get_object_or_404(Application, id=applicant_id)
+        student = applicant.student
+
+        if Interview.objects.filter(applicant=applicant).exists():
+            return JsonResponse({
+                'message': f'Interview is already scheduled for applicant ID {applicant_id}.'
+            }, status=400)
+
+        if action == 'collegecue platform':
+            job = applicant.job
+            company_name = job.company.name if job.company else "N/A"
+
+            interview = Interview.objects.create(
+                candidate_name=applicant.first_name,
+                applicant=applicant,
+                student=student,
+                round=round,
+                interview_date=interview_date,
+                job=job
+            )
+
+            interview_details = {
+                'company_name': company_name,
+                'applicant_name': f"{applicant.first_name} {applicant.last_name}",
+                'job_profile': job.job_title,
+                'applicant_id': applicant.id,
+                'interview_date': interview_date
+            }
+
+            return JsonResponse({
+                'message': 'Interview scheduled successfully.',
+                'interview_details': interview_details
+            })
+
+        return JsonResponse({
+            'message': 'Applicant\'s interview will be taken outside the CollegeCue platform.'
+        })
+
+    except json.JSONDecodeError:
+        return JsonResponse({'error': 'Invalid JSON data.'}, status=400)
+    except Exception as e:
+        return JsonResponse({'error': str(e)}, status=500)
+
+note:
+====
+1.Used early return for POST method validation to reduce indentation.
+
+2.Removed the unnecessary try-except for Application.DoesNotExist, since get_object_or_404 already handles that case.
+
+3.Consolidated logic into fewer blocks for better readability.
+
+4.Kept the error handling structure for unexpected exceptions at the end.
+
+=============================================================================================
+@csrf_exempt
+def get_upcoming_interviews(request):
+    if request.method != "GET":
+        return JsonResponse({'error': 'Invalid request method. Please use GET.'}, status=405)
+    
+    company_name = request.GET.get('company_name')
+    if not company_name:
+        return JsonResponse({'error': 'company_name parameter is required.'}, status=400)
+
+    try:
+        upcoming_interviews = Interview.objects.filter(
+            job__company__name=company_name,
+            interview_date__gte=timezone.now()
+        ).select_related('job__company')
+
+        interviews_list = [
+            {
+                'candidate_name': interview.candidate_name,
+                'job_title': interview.job.job_title,
+                'interview_date': interview.interview_date,
+                'round': interview.round,
+                'status': interview.status,
+                'time_left': str(interview.time_left()) if interview.time_left() else 'Expired',
+                'can_attend': interview.time_left() and interview.time_left().total_seconds() > 0,
+            }
+            for interview in upcoming_interviews
+        ]
+
+        return JsonResponse({'upcoming_interviews': interviews_list})
+
+    except Exception as e:
+        return JsonResponse({'error': str(e)}, status=500)
+note:
+====
+1.Method Check: The method check is moved to the top to avoid unnecessary processing.
+
+2.select_related: Using select_related improves performance by reducing database queries when accessing related objects (like job__company).
+
+3.List Comprehension: Replaced the for loop with a list comprehension for more concise and faster iteration.
+
+4.Conditional Handling: The time_left and can_attend conditions are handled directly inside the list comprehension for clarity and compactness.
+
+=============================================================================================
+@csrf_exempt
+def get_past_interviews(request):
+    if request.method != "GET":
+        return JsonResponse({'error': 'Invalid request method. Please use GET.'}, status=405)
+    
+    company_name = request.GET.get('company_name')
+    if not company_name:
+        return JsonResponse({'error': 'company_name parameter is required.'}, status=400)
+
+    try:
+        past_interviews = Interview.objects.filter(
+            job__company__name=company_name,
+            interview_date__lt=timezone.now()
+        ).select_related('job__company')
+
+        interviews_list = [
+            {
+                'candidate_name': interview.candidate_name,
+                'job_title': interview.job.job_title,
+                'interview_date': interview.interview_date,
+                'round': interview.round,
+                'status': interview.status,
+                'time_left': 'Expired',
+                'can_attend': False,
+            }
+            for interview in past_interviews
+        ]
+
+        return JsonResponse({'past_interviews': interviews_list})
+
+    except Exception as e:
+        return JsonResponse({'error': str(e)}, status=500)
+		
+note:
+====
+1.Method Check: The method check is moved to the top, making the logic more straightforward and avoiding unnecessary indentation.
+
+2.select_related: Using select_related reduces the number of database queries by eager loading related job__company data.
+
+3.List Comprehension: The for loop is replaced with a list comprehension for more concise and faster code.
+
+4.Streamlined Exception Handling: The try-except block is only around the database query and list generation to catch possible exceptions.
+
+==============================================================================================
+@csrf_exempt
+def get_upcoming_interviews_by_job_title(request):
+    if request.method != "GET":
+        return JsonResponse({'error': 'Invalid request method. Please use GET.'}, status=405)
+
+    student_email = request.GET.get('student_email')
+    job_title = request.GET.get('job_title')
+
+    if not student_email or not job_title:
+        return JsonResponse({'error': 'student_email and job_title parameters are required.'}, status=400)
+
+    try:
+        student = get_object_or_404(Student, email=student_email)
+
+        upcoming_interviews = Interview.objects.filter(
+            student=student,
+            applicant__job__job_title=job_title,
+            interview_date__gte=timezone.now(),
+            applicant__student__email=student.email
+        ).select_related('job__company')
+
+        interviews_data = [
+            {
+                'job_title': interview.job.job_title,
+                'job_id': interview.job.id,
+                'company_name': interview.job.company.name,
+                'interview_date': interview.interview_date.date(),
+                'interview_time': interview.interview_date.time(),
+                'time_left': str(interview.time_left()) if interview.time_left() else 'Expired',
+                'can_attend': interview.time_left() and interview.time_left().total_seconds() > 0,
+            }
+            for interview in upcoming_interviews
+        ]
+
+        return JsonResponse({'upcoming_interviews': interviews_data})
+
+    except Student.DoesNotExist:
+        return JsonResponse({'error': 'Student not found.'}, status=404)
+    except Exception as e:
+        return JsonResponse({'error': str(e)}, status=500)
+
+note:
+====
+1.Method Check: The method check is moved to the top for clarity and efficiency.
+
+2.select_related: The query uses select_related to optimize database access for job__company relationships.
+
+3.List Comprehension: The for loop is replaced with a list comprehension for improved readability and performance.
+
+4.Reduced Exception Block: Only necessary code is wrapped in the try-except block, focusing on specific exceptions.
+
+===========================================================================================
+@csrf_exempt
+def get_past_interviews_by_job_title(request):
+    if request.method != "GET":
+        return JsonResponse({'error': 'Invalid request method. Please use GET.'}, status=405)
+
+    student_email = request.GET.get('student_email')
+    job_title = request.GET.get('job_title')
+
+    if not student_email or not job_title:
+        return JsonResponse({'error': 'student_email and job_title parameters are required.'}, status=400)
+
+    try:
+        student = get_object_or_404(Student, email=student_email)
+
+        past_interviews = Interview.objects.filter(
+            student=student,
+            applicant__job__job_title=job_title,
+            interview_date__lt=timezone.now(),
+            applicant__student__email=student.email
+        ).select_related('job__company')
+
+        interviews_data = [
+            {
+                'job_title': interview.job.job_title,
+                'job_id': interview.job.id,
+                'company_name': interview.job.company.name,
+                'interview_date': interview.interview_date.date(),
+                'interview_time': interview.interview_date.time(),
+            }
+            for interview in past_interviews
+        ]
+
+        return JsonResponse({'past_interviews': interviews_data})
+
+    except Student.DoesNotExist:
+        return JsonResponse({'error': 'Student not found.'}, status=404)
+    except Exception as e:
+        return JsonResponse({'error': str(e)}, status=500)
+
+note:
+====
+1.Method Check: The method check is moved to the top for cleaner logic.
+
+2.select_related: Using select_related optimizes database queries when accessing related job__company objects.
+
+3.List Comprehension: The for loop is replaced with a list comprehension to improve readability and performance.
+
+4.Simplified Exception Handling: The exception handling is structured to catch only relevant exceptions.
+=============================================================================================

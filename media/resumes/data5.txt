@@ -1,0 +1,186 @@
+def fetch_user_score(user, exam_id):
+    try:
+        user_score = UserScore.objects.select_related('exam').get(user=user, exam_id=exam_id)
+        return user_score.score
+    except UserScore.DoesNotExist:
+        return api_response({'status': 'error', 'message': 'User score not found.'}, status=404)
+    except Exception as e:
+        return api_response({'status': 'error', 'message': str(e)}, status=500)
+
+note:
+====
+1.select_related: Prefetches the related Exam object in a single query to improve performance.
+
+2.Direct retrieval with get(): Eliminates the need for multiple get_object_or_404 calls, reducing the number of queries.
+
+3.Specific exception handling: Handles UserScore.DoesNotExist more gracefully, returning a 404 error when the score isn't found.
+
+====================================================================================================
+@login_required
+@require_GET
+def get_user_score(request, exam_id):
+    user = request.user
+
+    try:
+        score = fetch_user_score(user, exam_id)
+        exam_name = Exam.objects.get(id=exam_id).name
+
+        response_data = {
+            'user': user.username,
+            'exam': exam_name,
+            'score': score
+        }
+        return api_response(success=True, data=response_data)
+    except UserScore.DoesNotExist:
+        return api_response(success=False, error='User score not found.', status=404)
+    except Exam.DoesNotExist:
+        return api_response(success=False, error='Exam not found.', status=404)
+    except Exception as e:
+        return api_response(success=False, error='An error occurred while fetching user score', details=str(e), status=500)
+note:
+====
+1.Specific exception handling: Handles UserScore.DoesNotExist and Exam.DoesNotExist separately for clearer error messages and proper status codes.
+
+2.Removed unnecessary user variable: Since the user is fetched once and used multiple times, you can store it directly without needing the try block.
+
+=========================================================================================================
+
+@csrf_exempt
+@require_POST
+def submit_all_answers(request):
+    try:
+        form = SubmitAllAnswersForm(json.loads(request.body))
+        if form.is_valid():
+            session_id = form.cleaned_data['session_id']
+            answers = form.cleaned_data['answers']
+
+            session = get_object_or_404(ProctoringSession, id=session_id)
+            question_map = {q.question_no: q for q in session.exam.questions.all()}
+
+            user_score, _ = UserScore.objects.get_or_create(user=request.user, exam=session.exam)
+            current_time = timezone.now()
+
+            for answer in answers:
+                question_no = answer['question_no']
+                selected_option = answer['selected_option']
+                question = question_map.get(question_no)
+
+                if question:
+                    existing_response, created = UserResponse.objects.get_or_create(
+                        user=request.user,
+                        question=question,
+                        session=session,
+                        defaults={'selected_option': selected_option, 'response_time': current_time}
+                    )
+
+                    if not created:
+                        existing_response.selected_option = selected_option
+                        existing_response.response_time = current_time
+                        existing_response.save()
+
+                    if selected_option == question.correct_option:
+                        user_score.score += 1
+                        user_score.save()
+
+                    question.status = 'Answered'
+                    question.save()
+
+            return api_response({'success': True, 'message': 'Go to details page'}, status=200)
+        else:
+            return api_response({'success': False, 'error': 'Invalid data', 'details': form.errors}, status=400)
+    except Exception as e:
+        return api_response({'success': False, 'error': 'An error occurred while submitting all answers', 'details': str(e)}, status=500)
+
+note:
+====
+1.Question Mapping: Fetch all questions at once and create a mapping to avoid repeated queries within the loop.
+2.Combined get_or_create for UserResponse: Simplifies the creation and updating of UserResponse, reducing code duplication.
+3.Single instance of UserScore: Retrieve or create the UserScore once outside the loop, which reduces database calls.
+4.Use of defaults: This allows setting default values in get_or_create, making the code cleaner.
+
+====================================================================================================
+def fetch_job_titles(request):
+    if request.method == 'GET':
+        try:
+            job_titles = Job.objects.exclude(job_title='').values_list('job_title', flat=True).distinct()
+            return JsonResponse({'job_title': list(job_titles)})
+        except Exception as e:
+            return JsonResponse({'error': str(e)}, status=500)
+    return JsonResponse({'error': 'Invalid request method.'}, status=400)
+
+=======================================================================================================
+def fetch_job_types(request):
+    if request.method == 'GET':
+        try:
+            job_types = Job.objects.exclude(job_type='').values_list('job_type', flat=True).distinct()
+            return JsonResponse({'job_types': list(job_types)})
+        except Exception as e:
+            return JsonResponse({'error': str(e)}, status=500)
+    return JsonResponse({'error': 'Invalid request method.'}, status=400)
+=========================================================================================================
+def fetch_job_experience(request):
+    if request.method == 'GET':
+        try:
+            exp_types = Job.objects.exclude(experience='').values_list('experience', flat=True).distinct()
+            return JsonResponse({'exp_types': list(exp_types)})
+        except Exception as e:
+            return JsonResponse({'error': str(e)}, status=500)
+    return JsonResponse({'error': 'Invalid request method.'}, status=400)
+=========================================================================================================
+def fetch_job_category(request):
+    if request.method == 'GET':
+        try:
+            categories = Job.objects.exclude(category='').values_list('category', flat=True).distinct()
+            return JsonResponse({'category': list(categories)})
+        except Exception as e:
+            return JsonResponse({'error': str(e)}, status=500)
+    return JsonResponse({'error': 'Invalid request method.'}, status=400)
+	
+=========================================================================================================
+def fetch_job_workplaceTypes(request):
+    if request.method == 'GET':
+        try:
+            workplace_types = Job.objects.exclude(workplaceTypes='').values_list('workplaceTypes', flat=True).distinct()
+            return JsonResponse({'workplaceTypes': list(workplace_types)})
+        except Exception as e:
+            return JsonResponse({'error': str(e)}, status=500)
+    return JsonResponse({'error': 'Invalid request method.'}, status=400)
+	
+=========================================================================================================
+def fetch_job_location(request):
+    if request.method == 'GET':
+        try:
+            locations = Job.objects.exclude(location='').values_list('location', flat=True).distinct()
+            return JsonResponse({'location': list(locations)})
+        except Exception as e:
+            return JsonResponse({'error': str(e)}, status=500)
+    return JsonResponse({'error': 'Invalid request method.'}, status=400)
+	
+=========================================================================================================
+def fetch_sector_types(request):
+    if request.method == 'GET':
+        try:
+            sector_types = Company.objects.exclude(sector_type='').values_list('sector_type', flat=True).distinct()
+            return JsonResponse({'sector_type': list(sector_types)})
+        except Exception as e:
+            return JsonResponse({'error': str(e)}, status=500)
+    return JsonResponse({'error': 'Invalid request method.'}, status=400)
+=========================================================================================================
+def fetch_country_types(request):
+    if request.method == 'GET':
+        try:
+            country_names = Company.objects.exclude(country='').values_list('country', flat=True).distinct()
+            return JsonResponse({'country_name': list(country_names)})
+        except Exception as e:
+            return JsonResponse({'error': str(e)}, status=500)
+    return JsonResponse({'error': 'Invalid request method.'}, status=400)
+========================================================================================================
+def fetch_status_choices(request):
+    if request.method == 'GET':
+        try:
+            status_choices = Application.objects.exclude(status='').values_list('status', flat=True).distinct()
+            return JsonResponse({'status': list(status_choices)})
+        except Exception as e:
+            return JsonResponse({'error': str(e)}, status=500)
+    return JsonResponse({'error': 'Invalid request method.'}, status=400)
+========================================================================================================

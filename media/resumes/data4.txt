@@ -1,0 +1,192 @@
+def fetch_section_types(request):
+    try:
+        if request.method == 'GET':
+            section_types = Question.objects.filter(section__isnull=False).values_list('section', flat=True).distinct()
+            return api_response({'section_types': list(section_types)})
+        else:
+            return api_response({'status': 'error', 'message': 'Invalid request method'}, status=400)
+    except Exception as e:
+        return api_response({'status': 'error', 'message': str(e)}, status=500)
+
+note:
+====
+1.Query Optimization:
+Replaced the loop over all Question objects with a query that directly filters for non-null sections and retrieves distinct values using values_list('section', flat=True).distinct(). This minimizes database load by only fetching the necessary data.
+
+2.Conversion to List:
+list(section_types) ensures that the QuerySet is converted into a Python list, making it JSON-serializable for the API response.
+
+======================================================================================================
+@csrf_exempt
+@login_required
+@require_POST
+def mark_for_review(request):
+    try:
+        form = MarkForReviewForm(json.loads(request.body))
+        if not form.is_valid():
+            return api_response(success=False, error='Invalid data', status=400)
+
+        session_id = form.cleaned_data['session_id']
+        question_no = form.cleaned_data['question_no']
+        mark = form.cleaned_data['mark']
+
+        session = get_object_or_404(ProctoringSession.objects.only('id', 'exam'), id=session_id)
+        question = get_object_or_404(Question.objects.only('id', 'status'), exam=session.exam, question_no=question_no)
+
+        new_status = 'Mark for Review' if mark else 'Not Answered'
+        if question.status != new_status:
+            question.status = new_status
+            question.save(update_fields=['status'])
+
+        message = 'Question marked for review' if mark else 'Mark for review removed'
+        return api_response(success=True, data={'status': message})
+
+    except Exception as e:
+        return api_response(success=False, error='An error occurred while marking the question for review', details=str(e), status=500)
+note:
+====
+1)Form Validation First: The form validation block has been moved before the retrieval of the session and question objects. This prevents unnecessary database queries if the form data is invalid.
+
+2)Optimized Query Retrieval:
+
+Using .only('id', 'exam') on ProctoringSession and .only('id', 'status') on Question ensures that only the necessary fields are fetched, reducing database load.
+Conditional Save: Only updates the status field if there is a change, using update_fields=['status'] to optimize the save operation.
+
+3.Message Handling: The success message is simplified and stored in a variable (message) for easy reuse.
+
+========================================================================================================
+def fetch_event_types(request):
+    try:
+        if request.method == 'GET':
+            event_types = ProctoringEvent.objects.filter(event_type__isnull=False).values_list('event_type', flat=True).distinct()
+            return api_response({'event_types': list(event_types)})
+        else:
+            return api_response({'status': 'error', 'message': 'Invalid request method'}, status=400)
+    except Exception as e:
+        return api_response({'status': 'error', 'message': str(e)}, status=500)
+note:
+====
+1.Query Optimization:
+
+2.Instead of looping through all events, values_list('event_type', flat=True).distinct() fetches distinct event types in a single query, which is much more efficient.
+Filter Non-Null Values: filter(event_type__isnull=False) ensures that only non-null event types are processed, avoiding unnecessary data retrieval.
+
+3.List Conversion: list(event_types) ensures the result is JSON-serializable and ready for the API response.
+====================================================================================================
+def fetch_status_types(request):
+    try:
+        if request.method == 'GET':
+            status_types = Question.objects.filter(status__isnull=False).values_list('status', flat=True).distinct()
+            return api_response({'status_types': list(status_types)})
+        else:
+            return api_response({'status': 'error', 'message': 'Invalid request method'}, status=400)
+    except Exception as e:
+        return api_response({'status': 'error', 'message': str(e)}, status=500)
+	
+note:
+====
+1.Efficient Query: Instead of fetching all Question objects, the values_list('status', flat=True).distinct() method is used to directly retrieve distinct status values, reducing database load.
+
+2.Filtering Non-Null Values: Using filter(status__isnull=False) ensures only valid status types are considered.
+
+3.List Conversion: list(status_types) converts the QuerySet into a list, ensuring it can be easily serialized into JSON.
+
+=========================================================================================================
+class StatusTypeChoicesAPIView(APIView):
+    def get(self, request, fmt=None):
+        try:
+            session_type_choices = {key: value for key, value in ProctoringSession.STATUS_CHOICES}
+            return api_response({'choices': session_type_choices}, status=200)
+        except Exception as e:
+            return api_response({'status': 'error', 'message': str(e)}, status=500)
+			
+note:
+====
+1.Dictionary Comprehension: The use of a dictionary comprehension {key: value for key, value in ProctoringSession.STATUS_CHOICES} provides a clearer and potentially more efficient way of converting the STATUS_CHOICES tuple into a dictionary, though the original code works similarly in terms of performance.
+
+2.Error Handling: The error handling block remains the same, but the focus is on cleaner, more concise dictionary creation.
+
+=========================================================================================================
+@csrf_exempt
+def submit_details(request):
+    try:
+        if request.method == 'POST':
+            form = ExamParticipantForm(request.POST)
+            if not form.is_valid():
+                return api_response({'status': 'error', 'errors': form.errors})
+
+            participant = form.save(commit=False)
+            participant.exam_started = True
+            participant.save()
+
+            return api_response({
+                'status': 'success',
+                'message': 'Exam details submitted successfully',
+                'participant_id': participant.id,
+                'exam_started': participant.exam_started
+            })
+
+        return api_response({'status': 'error', 'message': 'Invalid request method'}, status=400)
+
+    except Exception as e:
+        return api_response({'status': 'error', 'message': str(e)}, status=500)
+
+note:
+====
+1.Early Form Validation Check: Checking form.is_valid() first eliminates the need for an extra indentation level, making the code more readable.
+
+========================================================================================================
+@login_required
+@require_GET
+def get_next_question(request, session_id, current_question_no):
+    try:
+        session = get_object_or_404(ProctoringSession, id=session_id)
+        next_question = (
+            Question.objects.filter(exam=session.exam, question_no__gt=current_question_no)
+            .order_by('question_no')
+            .values('question_no', 'question_text', 'option1', 'option2', 'option3', 'option4', 'status', 'section')
+            .first()
+        )
+
+        if not next_question:
+            return JsonResponse({'success': False, 'error': 'No next question available'}, status=404)
+
+        return api_response(next_question, status=200)
+    except Exception as e:
+        return api_response({'success': False, 'error': 'An error occurred while fetching the next question', 'details': str(e)}, status=500)
+		
+note:
+====
+1.values(): This reduces overhead by retrieving only the necessary fields directly from the database, rather than fetching the full model object.
+
+2.Simplified variable names: Reduced redundant lookups and made the code more concise while maintaining the same functionality.
+
+=========================================================================================================
+@login_required
+@require_GET
+def get_previous_question(request, session_id, current_question_no):
+    try:
+        session = get_object_or_404(ProctoringSession, id=session_id)
+        previous_question = (
+            Question.objects.filter(exam=session.exam, question_no__lt=current_question_no)
+            .order_by('-question_no')
+            .values('question_no', 'question_text', 'option1', 'option2', 'option3', 'option4', 'status', 'section')
+            .first()
+        )
+
+        if not previous_question:
+            return api_response({'success': False, 'error': 'No previous question available'}, status=404)
+
+        return api_response(previous_question, status=200)
+    except Exception as e:
+        return api_response({'success': False, 'error': 'An error occurred while fetching the previous question', 'details': str(e)}, status=500)
+
+note:
+====
+1.values(): Retrieves only the required fields directly from the database, reducing memory overhead.
+
+2.Query chaining: The .filter() and .order_by() are chained directly with .values() for a more concise query.
+
+3.Simplified response: Directly passing previous_question into api_response avoids extra dictionary creation.
+
+=========================================================================================================

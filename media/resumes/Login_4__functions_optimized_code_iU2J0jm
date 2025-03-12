@@ -1,0 +1,170 @@
+views.py code:
+==============
+@method_decorator(csrf_exempt, name='dispatch')
+class Forgot_view(View):
+    def post(self, request):
+        try:
+            data = json.loads(request.body.decode('utf-8'))
+            form = ForgotForm(data)
+            if form.is_valid():
+                forgot = form.save()
+                EMAIL = forgot.email
+                user = new_user.objects.filter(email=EMAIL).first()
+                if not user:
+                    return JsonResponse({'message': 'This email does not exist'}, status=404)
+
+                new_otp = ''.join([str(secrets.randbelow(10)) for _ in range(4)])
+                request.session['otp'] = new_otp
+                request.session['email'] = EMAIL
+                request.session.save()
+
+                subject = 'Your One-Time Password (OTP) for Secure Access'
+                message = f'''Dear User,
+
+                For security purposes, please use the following One-Time Password (OTP) to complete your authentication:
+
+                OTP: {new_otp}
+
+                Please enter this OTP within the next 3 minutes to ensure successful access. If you did not request this OTP, please contact our support team immediately.
+                
+                Thank you for your attention to this matter.
+
+                Best regards,
+                Collegecue
+                Support Team
+                '''
+                sender_email = settings.EMAIL_HOST_USER
+                recipient_email = [EMAIL]
+
+                send_mail(subject, message, sender_email, recipient_email)
+                return JsonResponse({'message': 'OTP sent successfully'})
+            else:
+                errors = dict(form.errors.items())
+                return JsonResponse({'success': False, 'errors': errors}, status=400)
+        except Exception as e:
+            return JsonResponse({'success': False, 'error': str(e)}, status=500)
+			
+NOTE:
+====
+1.Try-Except Block: Wrapped the entire code inside a try block to catch and handle any unexpected errors. If an error occurs, a generic error message is returned with a status of 500.
+
+2.Email Existence Check Response: Changed the response status code for the "This email does not exist" message to 404 for better semantics.
+
+===============================================================================================
+@method_decorator(csrf_exempt, name='dispatch')
+class Verify_view(View):
+    def post(self, request):
+        try:
+            data = json.loads(request.body.decode('utf-8'))
+            form = VerifyForm(data)
+            print(form.is_valid())
+            if form.is_valid():
+                verify = form.save()
+                otp_entered = verify.otp
+                stored_otp = request.session.get('otp')
+                stored_email = request.session.get('email')
+
+                if stored_email and stored_otp:
+                    if stored_otp == otp_entered:
+                        del request.session['otp']
+                        return JsonResponse({'message': 'OTP verification successful'})
+                    else:
+                        return JsonResponse({'error': 'Invalid OTP'}, status=400)
+                else:
+                    return JsonResponse({'error': 'Session data not found'}, status=400)
+            else:
+                errors = dict(form.errors.items())
+                return JsonResponse({'success': False, 'errors': errors}, status=400)
+        except Exception as e:
+            return JsonResponse({'success': False, 'error': str(e)}, status=500)
+NOTE:
+====
+1.Try-Except Block: Wrapped the code inside a try block to handle potential exceptions, returning a 500 status with an error message if something goes wrong.
+
+2.Error Handling for Form Validation: The error handling remains in case the form is invalid, providing detailed feedback on validation errors.
+===================================================================================================
+@csrf_protect
+def resend_otp(request):
+    try:
+        csrf_token = get_token(request)
+        if not csrf_token:
+            return JsonResponse({'error': 'CSRF token missing'}, status=403)
+
+        email = request.session.get('email')
+        if not email:
+            return JsonResponse({'error': 'Email not found in session'}, status=400)
+
+        new_otp = ''.join([str(secrets.randbelow(10)) for _ in range(4)])
+        request.session['otp'] = new_otp
+        request.session['email'] = email
+
+        subject = 'Your One-Time Password (OTP) for Secure Access'
+        message = f'''Dear User,
+
+        For security purposes, please use the following One-Time Password (OTP) to complete your authentication:
+
+        OTP: {new_otp}
+
+        Please enter this OTP within the next 3 minutes to ensure successful access. If you did not request this OTP, please contact our support team immediately.
+                
+        Thank you for your attention to this matter.
+
+        Best regards,
+        Collegecue
+        Support Team
+        '''
+
+        sender_email = settings.EMAIL_HOST_USER
+        recipient_email = [email]
+        send_mail(subject, message, sender_email, recipient_email)
+        return JsonResponse({'message': 'New OTP sent successfully'})
+    except Exception as e:
+        return JsonResponse({'success': False, 'error': str(e)}, status=500)
+
+
+NOTE:
+====
+1.Try-Except Block: Wrapped the entire code inside a try block to catch any potential exceptions and return a generic error message with a status of 500 if an error occurs.
+
+2.Email Existence Check: Added a check for the email variable in the session. If it's not found, it returns a 400 status with a relevant error message.
+
+3.Error Handling: The error handling in the except block provides informative feedback in case of unexpected issues.
+================================================================================================
+@method_decorator(csrf_exempt, name='dispatch')
+class Forgot2_view(View):
+    def post(self, request):
+        try:
+            data = json.loads(request.body.decode('utf-8'))
+            form = Forgot2Form(data)
+            print(form.is_valid())
+            if form.is_valid():
+                forgot2 = form.save(commit=False)
+                password = form.cleaned_data['password']
+                confirm_password = form.cleaned_data['confirm_password']
+                
+                if password != confirm_password:
+                    return JsonResponse({'error': 'Passwords did not match'}, status=400)
+
+                hashed_password = make_password(password)
+                stored_email = request.session.get('email')
+                user = new_user.objects.filter(email=stored_email).first()
+                
+                if user:
+                    user.password = hashed_password
+                    user.save()
+                    del request.session['email']
+                    return JsonResponse({"message": 'Password updated successfully'})
+                else:
+                    return JsonResponse({'error': 'User not found'}, status=404)
+
+            else:
+                errors = dict(form.errors.items())
+                return JsonResponse({'success': False, 'errors': errors}, status=400)
+        except Exception as e:
+            return JsonResponse({'success': False, 'error': str(e)}, status=500)
+NOTE:
+====
+1.Try-Except Block: Wrapped the code inside a try block to catch any exceptions that might occur, allowing for graceful error handling and providing a 500 status response if needed.
+
+2.User Existence Check: Added a check to ensure the user exists before attempting to update the password. If the user is not found, a 404 status is returned with an appropriate error message.
+=================================================================================================

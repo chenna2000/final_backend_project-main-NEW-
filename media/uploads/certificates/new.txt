@@ -1,0 +1,129 @@
+@method_decorator(csrf_exempt, name='dispatch')
+class RegisterUniversityInChargeView(View):
+    def post(self, request):
+        try:
+            data = json.loads(request.body.decode('utf-8'))
+        except json.JSONDecodeError:
+            return JsonResponse({'success': False, 'errors': 'Invalid JSON'}, status=400)
+        
+        university_name = data.get('university_name', '')
+        location_name = university_name.split()[-1] if university_name else ''
+        print("Location =>>>", location_name)
+
+        formatted_university_name = re.sub(r'[^a-zA-Z0-9]', '', university_name).lower()
+        formatted_university_name1 = formatted_university_name[:30]
+
+        form = UniversityInChargeForm(data)
+        if form.is_valid():
+            university = form.save(commit=False)
+            university.password = make_password(university.password)
+
+            if formatted_university_name.startswith('indianinstituteoftechnology'):
+                university.trimmed_university_name = 'IIT ' + location_name
+            elif formatted_university_name.startswith('indianinstituteofinformationtechnology'):
+                university.trimmed_university_name = 'IIIT ' + location_name
+            elif formatted_university_name.startswith('nationalinstituteoftechnology'):
+                university.trimmed_university_name = 'NIT ' + location_name
+            elif formatted_university_name.startswith('indianinstitutesofmanagement'):
+                university.trimmed_university_name = 'IIM ' + location_name
+            else:
+                university.trimmed_university_name = formatted_university_name1
+
+            university.save()
+
+            send_data_to_google_sheet3(
+                university.university_name,
+                university.official_email,
+                university.country_code,
+                university.mobile_number,
+                university.password,
+                university.linkedin_profile,
+                university.college_person_name,
+                university.agreed_to_terms,
+                "Sheet3"
+            )
+
+            sender_email = settings.EMAIL_HOST_USER
+            recipient_email = [university.official_email]
+            subject = 'Confirmation Mail'
+            message = '''Dear User,
+
+            Thank you for your registration.
+
+            If you have any questions or need further assistance, please don't hesitate to contact our support team.
+
+            Best regards,
+            Collegecue
+            Support Team
+            '''
+            email = EmailMessage(subject, message, sender_email, recipient_email)
+            email.send()
+
+            return JsonResponse({'success': True, 'message': 'Registration successful'})
+
+        else:
+            errors = dict(form.errors.items())
+            return JsonResponse({'success': False, 'errors': errors}, status=400)
+
+
+======================================================================================================================================
+
+
+
+@csrf_exempt
+def submit_enquiry(request, id, collegeName):
+    if request.method != 'POST':
+        return JsonResponse({'error': 'Invalid request method'}, status=405)
+
+    try:
+        data = json.loads(request.body)
+        print("College Name =>> ", collegeName)
+
+        short_clg_name = " ".join(collegeName.split()[:2]) if len(collegeName.split()) > 1 else collegeName
+        print("Short College Name =>> ", short_clg_name)
+
+        formatted_college_name = re.sub(r'[^a-zA-Z0-9]', '', collegeName).lower()
+        formatted_college_name1 = formatted_college_name[:30]
+
+        if short_clg_name.startswith(('IIT', 'IIIT', 'NIT', 'IIM')):
+            university_incharge = UniversityInCharge.objects.filter(trimmed_university_name=short_clg_name).first()
+            final_college_name = short_clg_name 
+        else:
+            university_incharge = UniversityInCharge.objects.filter(trimmed_university_name=formatted_college_name1).first()
+            final_college_name = formatted_college_name1
+        
+        required_fields = ["firstname", "lastname", "email", "country_code", "mobile_number", "course"]
+        missing_fields = [field for field in required_fields if not data.get(field)]
+        if missing_fields:
+            return JsonResponse({'error': 'All fields are required', 'missing_fields': missing_fields}, status=400)
+
+        email = data['email']
+        user = new_user.objects.filter(email=email).first()
+
+        if new_user_enquiry.objects.filter(clg_id=id, email=email).exists():
+            return JsonResponse({'error': 'An enquiry has already been submitted for this college with this email.'}, status=400)
+
+        enquiry = new_user_enquiry.objects.create(
+            first_name=data['firstname'],
+            last_name=data['lastname'],
+            email=email,
+            country_code=data['country_code'],
+            mobile_number=data['mobile_number'],
+            course=data['course'],
+            clg_id=id,
+            collegeName=final_college_name,
+            new_user=user,
+            university_in_charge=university_incharge
+        )
+
+        return JsonResponse({
+            'message': 'Enquiry submitted successfully',
+            'enquiry_id': enquiry.id
+        }, status=201)
+
+    except json.JSONDecodeError:
+        return JsonResponse({'error': 'Invalid JSON'}, status=400)
+    except IntegrityError:
+        return JsonResponse({'error': 'Error while saving data. Please try again.'}, status=500)
+    except Exception as e:
+        return JsonResponse({'error': f'An unexpected error occurred: {str(e)}'}, status=500)

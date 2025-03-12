@@ -1,0 +1,2086 @@
+{
+	"info": {
+		"_postman_id": "ce5baf6e-3c90-4a29-b67c-6991a23cce74",
+		"name": "COLLEGECUE PROJECT TOATAL UPDATED  API  ENDPOINTS(KM)",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+		"_exporter_id": "31248398",
+		"_collection_link": "https://interstellar-moon-607402.postman.co/workspace/Team-Workspace~05e5082b-ca50-4d15-8e61-b419f91b8a3d/collection/31248398-ce5baf6e-3c90-4a29-b67c-6991a23cce74?action=share&source=collection_link&creator=31248398"
+	},
+	"item": [
+		{
+			"name": "WELCOME TO COLLEGCECUE",
+			"request": {
+				"method": "GET",
+				"header": [
+					{
+						"key": "",
+						"value": "",
+						"type": "text",
+						"disabled": true
+					}
+				],
+				"url": {
+					"raw": "http://localhost:8000/",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "8000",
+					"path": [
+						""
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "STUDENT REGISTRATION API ENDPOINT",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"pm.test(\"Status code is 200\", function () {",
+							"    pm.response.to.have.status(200);",
+							"});"
+						],
+						"type": "text/javascript",
+						"packages": {}
+					}
+				}
+			],
+			"protocolProfileBehavior": {
+				"followOriginalHttpMethod": false
+			},
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "X-CSRFToken",
+						"value": "xCk5bmKRSQRUg7SbohvqEHghjaT4ZofkFvV67s5tPmenQEHbBTT9H9H7DzCgENLM"
+					},
+					{
+						"key": "Authorization",
+						"value": "Bearer vxaz31iPX67jFA79kI1oKHRJKff1KnTrGLjL2t7O",
+						"type": "text"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "\n{\n   \"firstname\":\"kesahv\",\n   \"lastname\":\"p\",\n   \"email\":\"goodhuman99595@gmail.com\",\n   \"country_code\":\"+91\",\n   \"phonenumber\":\"1234567890\",\n   \"password\":\"k@123\"\n  \n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "http://localhost:8000/register",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "8000",
+					"path": [
+						"register"
+					],
+					"query": [
+						{
+							"key": null,
+							"value": "",
+							"disabled": true
+						}
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "STUDENT NEXT PAGE API ENDPOINT",
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "X-CSRFToken",
+						"value": "xCk5bmKRSQRUg7SbohvqEHghjaT4ZofkFvV67s5tPmenQEHbBTT9H9H7DzCgENLM"
+					},
+					{
+						"key": "Authorization",
+						"value": "Bearer vxaz31iPX67jFA79kI1oKHRJKff1KnTrGLjL2t7O",
+						"type": "text"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n\"firstname\":\"kesahv\",\n\"lastname\":\"p\",\n\"email\":\"goodhuman99595@gmail.com\",\n\"country_code\":\"+91\",\n\"phonenumber\":\"1234567890\",\n\"password\":\"k@123\",\n\"education\":\"B-Tech\",\n\"percentage\":\"91\",\n\"preferred_destination\":\"Pune\",\n\"start_date\":\"2024\",\n\"mode_study\":\"Online\",\n\"entrance\":\"yes\",\n\"passport\":\"None\",\n\"course\":\"Mech\"\n\n}\n",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "http://localhost:8000/next",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "8000",
+					"path": [
+						"next"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "STUDENT LOGIN ENDPOINT",
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "X-CSRFToken",
+						"value": "xCk5bmKRSQRUg7SbohvqEHghjaT4ZofkFvV67s5tPmenQEHbBTT9H9H7DzCgENLM"
+					},
+					{
+						"key": "",
+						"value": "",
+						"type": "text",
+						"disabled": true
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\r\n\r\n\"email\":\"goodhuman99595@gmail.com\",\"password\":\"k@123\"}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "http://localhost:8000/login",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "8000",
+					"path": [
+						"login"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "STUDENT FORGT PASSWORD",
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "X-CSRFToken",
+						"value": "xCk5bmKRSQRUg7SbohvqEHghjaT4ZofkFvV67s5tPmenQEHbBTT9H9H7DzCgENLM"
+					},
+					{
+						"key": "Authorization",
+						"value": "Bearer oePz5g5JeqR9Wee8vCNkzqDFtzAzwV34pDwtnMKf",
+						"type": "text",
+						"disabled": true
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\"email\":\"goodhuman99595@gmail.com\"}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "http://localhost:8000/forgot",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "8000",
+					"path": [
+						"forgot"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "STUDENT RESEND OTP",
+			"request": {
+				"method": "GET",
+				"header": [
+					{
+						"key": "X-CSRFToken",
+						"value": "xCk5bmKRSQRUg7SbohvqEHghjaT4ZofkFvV67s5tPmenQEHbBTT9H9H7DzCgENLM"
+					},
+					{
+						"key": "Authorization",
+						"value": "Bearer oePz5g5JeqR9Wee8vCNkzqDFtzAzwV34pDwtnMKf",
+						"type": "text",
+						"disabled": true
+					}
+				],
+				"url": {
+					"raw": "http://localhost:8000/resend-otp/",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "8000",
+					"path": [
+						"resend-otp",
+						""
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "STUDENT VERIFY_OTP",
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "X-CSRFToken",
+						"value": "xCk5bmKRSQRUg7SbohvqEHghjaT4ZofkFvV67s5tPmenQEHbBTT9H9H7DzCgENLM"
+					},
+					{
+						"key": "Authorization",
+						"value": "Bearer oePz5g5JeqR9Wee8vCNkzqDFtzAzwV34pDwtnMKf",
+						"type": "text",
+						"disabled": true
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\"otp\":\"4830\"\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "http://localhost:8000/verify_otp1",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "8000",
+					"path": [
+						"verify_otp1"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "STUDENT RESET PASSWORD BEFORE LOGIN",
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "X-CSRFToken",
+						"value": "xCk5bmKRSQRUg7SbohvqEHghjaT4ZofkFvV67s5tPmenQEHbBTT9H9H7DzCgENLM"
+					},
+					{
+						"key": "Authorization",
+						"value": "Bearer TYi8aKsXPl57jabukUsKCAyUrVZFCtlzKqS3Bz8i",
+						"type": "text",
+						"disabled": true
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\r\n    \"password\":\"k@4\",\"confirm_password\":\"k@4\"\r\n    \r\n }",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "http://localhost:8000/forgot2",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "8000",
+					"path": [
+						"forgot2"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "STUDENT RESET PASSWORD AFTER LOGIN",
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "Authorization",
+						"value": "Bearer U44TvF0RDy5BgVz7TPK7fRpHEEjOeLnRe1RlOV8m",
+						"type": "text"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\r\n    \"email\": \"chennakesavarao000@gmail.com\",\r\n    \"old_password\": \"k@123\",\r\n    \"new_password\": \"k@1234\",\r\n    \"confirm_password\": \"k@1234\"\r\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "http://localhost:8000/student-reset-password/",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "8000",
+					"path": [
+						"student-reset-password",
+						""
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "STUDENT LOGOUT",
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "Authorization",
+						"value": "Bearer YmMir6Uob1fvmvT2pFQczfpRkWZktL3v1xD07TLX",
+						"type": "text"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\r\n    \"confirmation\": true\r\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "http://localhost:8000/logout/student/",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "8000",
+					"path": [
+						"logout",
+						"student",
+						""
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "STUDENT DELETE ACCOUNT",
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "Authorization",
+						"value": "Bearer 41bECoutQe5Lqz5jRlsY7AfdjCXYM2tzixkT9I7a",
+						"type": "text"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\r\n    \"confirmation\": true\r\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "http://localhost:8000/user/delete-account/",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "8000",
+					"path": [
+						"user",
+						"delete-account",
+						""
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "COMPANY REGISTRATION API ENDPOINT",
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "",
+						"value": "",
+						"type": "text",
+						"disabled": true
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n    \"company_name\": \"Infosys\",\n    \"official_email\": \"peddarapuc11431@gmail.com\",\n    \"country_code\": \"+91\",\n    \"mobile_number\": \"9130385423\",\n    \"password\": \"k@10\",\n    \"linkedin_profile\": \"https://www.linkedin.com/in/example\",\n    \"company_person_name\": \"keshav p\",\n    \"agreed_to_terms\": \"true\"\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "http://localhost:8000/register/company/",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "8000",
+					"path": [
+						"register",
+						"company",
+						""
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "COMPANY LOGIN",
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "",
+						"value": "",
+						"type": "text",
+						"disabled": true
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\r\n  \"official_email\": \"peddarapuc11431@gmail.com\",\r\n  \"password\": \"k@10\"\r\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "http://localhost:8000/login/company/",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "8000",
+					"path": [
+						"login",
+						"company",
+						""
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "COMPANY FORGOT PASSWORD",
+			"request": {
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\r\n    \"email\":\"kuranemayuresh10@gmail.com\"\r\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "http://localhost:8000/company-forgot",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "8000",
+					"path": [
+						"company-forgot"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "COMPANY VERIFY OTP",
+			"request": {
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\r\n    \"otp\":\"3600\"\r\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "http://localhost:8000/company-verify_otp",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "8000",
+					"path": [
+						"company-verify_otp"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "COMPANY RESEND OTP",
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "http://localhost:8000/company-resend-otp",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "8000",
+					"path": [
+						"company-resend-otp"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "COMPANY RESET PASSWORD BEFORE LOGIN",
+			"request": {
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\r\n    \"password\":\"mayur@12\",\r\n    \"confirm_password\":\"mayur@12\"\r\n    \r\n }",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "http://localhost:8000/company-forgot2",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "8000",
+					"path": [
+						"company-forgot2"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "COMPNAY RESET PASSWORD AFTER LOGIN",
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "Authorization",
+						"value": "Bearer 9ylxKr755yNmu1ehQpydUOqZfRNX63iQXXVUf6F4",
+						"type": "text"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\r\n    \"official_email\": \"peddarapuc110@gmail.com\",\r\n    \"old_password\": \"k@10\",\r\n    \"new_password\": \"k@10\",\r\n    \"confirm_password\": \"k@10\"\r\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "http://127.0.0.1:8000/change-password-company/",
+					"protocol": "http",
+					"host": [
+						"127",
+						"0",
+						"0",
+						"1"
+					],
+					"port": "8000",
+					"path": [
+						"change-password-company",
+						""
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "COMPNAY LOGOUT",
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "Authorization",
+						"value": "Bearer ytnFpXWn0iMCRNC48TWsv3WCK7rGSAE3gLiELpXw",
+						"type": "text"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\r\n    \"confirmation\": true\r\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "http://localhost:8000/logout/company/",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "8000",
+					"path": [
+						"logout",
+						"company",
+						""
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "COMPANY DELETE ACCOUNT",
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "Authorization",
+						"value": "Bearer 9mwkUA9AEfIv9rqrApNa1Hphn8Q2Df91GtLCT2DX",
+						"type": "text"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\r\n    \"confirmation\": true\r\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "http://localhost:8000/company/delete-account/",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "8000",
+					"path": [
+						"company",
+						"delete-account",
+						""
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "UNIVERSITY REGISTRATION API ENDPOINT",
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "",
+						"value": "",
+						"type": "text",
+						"disabled": true
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n  \"university_name\": \"JNTUA\",\n  \"official_email\": \"peddarapuc1100@gmail.com\",\n  \"country_code\": \"+91\",\n  \"mobile_number\": \"7645321934\",\n  \"password\": \"k@20\",\n  \"linkedin_profile\": \"https://www.linkedin.com/in/example\",\n  \"college_person_name\": \"keshav Peddarapu\",\n  \"agreed_to_terms\": \"true\"\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "http://localhost:8000/register/university/",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "8000",
+					"path": [
+						"register",
+						"university",
+						""
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "UNIVERSITY LOGIN",
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "",
+						"value": "",
+						"type": "text",
+						"disabled": true
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\r\n  \"official_email\": \"peddarapuc1100@gmail.com\",\r\n  \"password\": \"k@20\"\r\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "http://localhost:8000/login/university/",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "8000",
+					"path": [
+						"login",
+						"university",
+						""
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "UNIVERSITY FORGOT PASSWORD",
+			"request": {
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\r\n    \"email\":\"kuranemayuresh10@gmail.com\"\r\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "http://localhost:8000/college-forgot/",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "8000",
+					"path": [
+						"college-forgot",
+						""
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "UNIVERSITY VERIFY OTP",
+			"request": {
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\r\n    \"otp\":\"5175\"\r\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "http://localhost:8000/college-verify-otp/",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "8000",
+					"path": [
+						"college-verify-otp",
+						""
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "UNIVERSITY RESEND OTP",
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "http://localhost:8000/college-resend-otp/",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "8000",
+					"path": [
+						"college-resend-otp",
+						""
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "UNIVERSITY RESET PASSWORD BEFORE LOGIN",
+			"request": {
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\r\n    \"password\":\"mayur@12\",\r\n    \"confirm_password\":\"mayur@12\"\r\n    \r\n }",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "http://localhost:8000/college-reset-password/",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "8000",
+					"path": [
+						"college-reset-password",
+						""
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "UNIVERSITY RESET PASSWORD AFTER LOGIN",
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "Authorization",
+						"value": "Bearer ul6e4859VXAEsWtBE801XKEqFIsgTT6BxcNUX4Sf",
+						"type": "text"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\r\n    \"official_email\": \"peddarapuc100@gmail.com\",\r\n    \"old_password\": \"k@20\",\r\n    \"new_password\": \"k@20\",\r\n    \"confirm_password\": \"k@20\"\r\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "http://127.0.0.1:8000/change-password-university/",
+					"protocol": "http",
+					"host": [
+						"127",
+						"0",
+						"0",
+						"1"
+					],
+					"port": "8000",
+					"path": [
+						"change-password-university",
+						""
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "UNIVERSITY LOGOUT",
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "Authorization",
+						"value": "Bearer SFjkbw1b8C4l9ugee4Q7ikxlk41AmdiAEPVYVw3Z",
+						"type": "text"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\r\n    \"confirmation\": true\r\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "http://localhost:8000/logout/university/",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "8000",
+					"path": [
+						"logout",
+						"university",
+						""
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "UNIVERSITY  DELETE ACCOUNT",
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "Authorization",
+						"value": "Bearer fEOBQLaGEaDaqKhOqhvaWODYO9bKZ52ZZiVyOIEE",
+						"type": "text"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\r\n    \"confirmation\": true\r\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "http://127.0.0.1:8000/university/delete-account/",
+					"protocol": "http",
+					"host": [
+						"127",
+						"0",
+						"0",
+						"1"
+					],
+					"port": "8000",
+					"path": [
+						"university",
+						"delete-account",
+						""
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "CONSULTANT REGISTRATION ENDPOINT",
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "",
+						"value": "",
+						"type": "text",
+						"disabled": true
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n\"consultant_name\": \"keshav Peddarapu\",\n \"official_email\": \"peddarapuc273@gmail.com\",\n\"country_code\": \"+91\",\n\"mobile_number\": \"9876543210\",\n\"password\": \"k@12\",\n\"linkedin_profile\": \"https://www.linkedin.com/in/keshav\",\n\"consultant_person_name\": \"Marketing Manager\",\n\"agreed_to_terms\": \"true\"\n}\n\n",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "http://localhost:8000/register/consultant/",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "8000",
+					"path": [
+						"register",
+						"consultant",
+						""
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "CONSULTANT LOGIN",
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "",
+						"value": "",
+						"type": "text",
+						"disabled": true
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\r\n  \"official_email\": \"peddarapuc273@gmail.com\",\r\n  \"password\": \"k@12\"\r\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "http://localhost:8000/login/consultant/",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "8000",
+					"path": [
+						"login",
+						"consultant",
+						""
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "CONSULTANT FORGOT PASSWORD",
+			"request": {
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\r\n    \"email\":\"kuranemayuresh@gmail.com\"\r\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "http://localhost:8000/consultant-forgot/",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "8000",
+					"path": [
+						"consultant-forgot",
+						""
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "CONSULTANT VERIFY OTP",
+			"request": {
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\r\n    \"otp\":\"8740\"\r\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "http://localhost:8000/consultant-verify-otp/",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "8000",
+					"path": [
+						"consultant-verify-otp",
+						""
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "CONSULTANT RESEND OTP",
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "http://localhost:8000/consultant-resend-otp/",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "8000",
+					"path": [
+						"consultant-resend-otp",
+						""
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "CONSULTANT RESET PASSWORD BEFORE LOGIN",
+			"request": {
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\r\n    \"password\":\"mayur@123\",\r\n    \"confirm_password\":\"mayur@123\"\r\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "http://localhost:8000/consultant-reset-password/",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "8000",
+					"path": [
+						"consultant-reset-password",
+						""
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "CONSULTANT RESET PASSWORD AFTER LOGIN",
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "Authorization",
+						"value": "Bearer 8UHU7FMvrUWjl3NcqO18nyEDMUE4QMqUK63a3Rxm",
+						"type": "text"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\r\n    \"email\": \"peddarapuc1@gmail.com\",\r\n    \"old_password\": \"k@12\",\r\n    \"new_password\": \"k@7\",\r\n    \"confirm_password\": \"k@7\"\r\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "http://localhost:8000/consultant/change-password/",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "8000",
+					"path": [
+						"consultant",
+						"change-password",
+						""
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "CONSULTANT LOGOUT",
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "Authorization",
+						"value": "Bearer m95u9H1BR7aILsq1fGIIlyF6OvifahCcUiIxkDdR",
+						"type": "text"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\r\n    \"confirmation\": true\r\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "http://localhost:8000/logout/consultant/",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "8000",
+					"path": [
+						"logout",
+						"consultant",
+						""
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "CONUSULTANT DELETE ACCOUNT",
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "Authorization",
+						"value": "Bearer TOpI4MSL5GJgfLBbrNrzzzzM0do13X8myDpghtWq",
+						"type": "text"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\r\n    \"confirmation\": true\r\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "http://localhost:8000/consultant/delete-account/",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "8000",
+					"path": [
+						"consultant",
+						"delete-account",
+						""
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "REGISTRATION JOB-SEEKER",
+			"request": {
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\r\n    \"first_name\": \"keshav4\",\r\n    \"last_name\": \"p4\",\r\n    \"email\": \"chennakesavarao1273@gmail.com\",\r\n    \"mobile_number\": \"9876543212\",\r\n    \"password\": \"k@123\",\r\n    \"country_code\": \"+91\",\r\n    \"agreed_to_terms\": true\r\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "http://localhost:8000/register/job-seeker/",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "8000",
+					"path": [
+						"register",
+						"job-seeker",
+						""
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "LOGIN JOBSEEKER",
+			"request": {
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\r\n    \"email\":\"chennakesavarao1273@gmail.com\",\r\n    \"password\":\"k@123\"\r\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "http://localhost:8000/login/job_seeker/",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "8000",
+					"path": [
+						"login",
+						"job_seeker",
+						""
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "JOBSEEKER FORGOT PASSWORD",
+			"request": {
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\r\n    \"email\":\"kuranemayuresh10@gmail.com\"\r\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "http://localhost:8000/jobseeker-forgot/",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "8000",
+					"path": [
+						"jobseeker-forgot",
+						""
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "JOBSEEKER VERIFY OTP",
+			"request": {
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\r\n    \"otp\":\"3081\"\r\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "http://localhost:8000/jobseeker-verify-otp/",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "8000",
+					"path": [
+						"jobseeker-verify-otp",
+						""
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "JOBSEEKER RESEND OTP",
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "http://localhost:8000/jobseeker-resend-otp/",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "8000",
+					"path": [
+						"jobseeker-resend-otp",
+						""
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "JOBSEEKER RESET PASSWORD BEFORE LOGIN",
+			"request": {
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\r\n    \"password\":\"mayur@12\",\r\n    \"confirm_password\":\"mayur@12\"\r\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "http://localhost:8000/jobseeker-reset-password/",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "8000",
+					"path": [
+						"jobseeker-reset-password",
+						""
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "JOB-SEEKER RESET PASSWORD AFTER LOGIN",
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "Authorization",
+						"value": "Bearer IZ4QhVdzjg9vikopelmJ0glzbEcyov1ngIx63p9g",
+						"type": "text"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\r\n    \"official_email\": \"chennakesavarao273@gmail.com\",\r\n    \"old_password\": \"k@123\",\r\n    \"new_password\": \"k@123\",\r\n    \"confirm_password\": \"k@123\"\r\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "http://127.0.0.1:8000/job-seeker/change-password/",
+					"protocol": "http",
+					"host": [
+						"127",
+						"0",
+						"0",
+						"1"
+					],
+					"port": "8000",
+					"path": [
+						"job-seeker",
+						"change-password",
+						""
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "JOBSEEKER LOGOUT",
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "Authorization",
+						"value": "Bearer 6MO1N3yNbyKk7v84rPSGenQYza7QhT3NvL0q7iWs",
+						"type": "text"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\r\n    \"confirmation\": true\r\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "http://localhost:8000/logout/job-seeker/",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "8000",
+					"path": [
+						"logout",
+						"job-seeker",
+						""
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "JOB SEEKER DELETE ACCOUNT",
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "Authorization",
+						"value": "Bearer ryl1jXWWF8NlikIAMm5RBeIsIahUw75td2eW5qO7",
+						"type": "text"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\r\n    \"confirmation\": true\r\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "http://127.0.0.1:8000/job-seeker/delete-account/",
+					"protocol": "http",
+					"host": [
+						"127",
+						"0",
+						"0",
+						"1"
+					],
+					"port": "8000",
+					"path": [
+						"job-seeker",
+						"delete-account",
+						""
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "SUBSCRIBE API ENDPOINT",
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "Authorization",
+						"value": "Bearer 6NmBTOb7G3kWsIYjGJ97WL7Xn4mdCbVIxdQZaluf",
+						"type": "text"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\"email\":\"chennakesavarao1000@gmail.com\",\"subscribed_at\":\"30-1-2025\"}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "http://localhost:8000/job_portal",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "8000",
+					"path": [
+						"job_portal"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "SUBSCRIBE 1 API ENDPOINT",
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "Authorization",
+						"value": "Bearer 6NmBTOb7G3kWsIYjGJ97WL7Xn4mdCbVIxdQZaluf",
+						"type": "text"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\"email\":\"peddarapuc@gmail.com\",\"subscribed_at\":\"30-1-2025\"}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "http://localhost:8000/subscriber",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "8000",
+					"path": [
+						"subscriber"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "GOOGLE AUTH ENDPOINT",
+			"request": {
+				"method": "GET",
+				"header": [
+					{
+						"key": "Authorization",
+						"value": "Bearer 6NmBTOb7G3kWsIYjGJ97WL7Xn4mdCbVIxdQZaluf",
+						"type": "text"
+					}
+				],
+				"url": {
+					"raw": "http://127.0.0.1:8000/accounts/login/",
+					"protocol": "http",
+					"host": [
+						"127",
+						"0",
+						"0",
+						"1"
+					],
+					"port": "8000",
+					"path": [
+						"accounts",
+						"login",
+						""
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "VERIFY GOOGLE TOKEN",
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "Authorization",
+						"value": "Bearer 6NmBTOb7G3kWsIYjGJ97WL7Xn4mdCbVIxdQZaluf",
+						"type": "text"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\r\n    \"token\": \"YOUR_GOOGLE_ID_TOKEN\"\r\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "http://localhost:8000/verify-token/",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "8000",
+					"path": [
+						"verify-token",
+						""
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "LINKEDIN VERIFY TOKEN",
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "Authorization",
+						"value": "Bearer 6NmBTOb7G3kWsIYjGJ97WL7Xn4mdCbVIxdQZaluf",
+						"type": "text"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\r\n    \"token\": \"YOUR_LINKEDIN_ID_TOKEN\"\r\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "http://127.0.0.1:8000/api/verify-linkedin/",
+					"protocol": "http",
+					"host": [
+						"127",
+						"0",
+						"0",
+						"1"
+					],
+					"port": "8000",
+					"path": [
+						"api",
+						"verify-linkedin",
+						""
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "SEARCH FUNCTIONALITY FOR CMS PORTAL",
+			"request": {
+				"method": "GET",
+				"header": [
+					{
+						"key": "Authorization",
+						"value": "Bearer f120cebcf2a4379d72b80691ed4fe25bfc7443b11ce3739e6ee7e1bb790923505b48f76881878ee5f8f6af795bfc2c0be5c7d130dc820f3503bf58cced23e7c8462c10cf656a865164d8a6546f14a10f9c0bd31ed348f8774e6b47cb930a6266e13479cbf80f0a6e6c888e2c01696a0cd94b0b6d2da1dbc9eebc862985cdf64b"
+					},
+					{
+						"key": "",
+						"value": "",
+						"type": "text",
+						"disabled": true
+					}
+				],
+				"url": {
+					"raw": "http://127.0.0.1:8000/search?q=&page=6&per_page=10\n",
+					"protocol": "http",
+					"host": [
+						"127",
+						"0",
+						"0",
+						"1"
+					],
+					"port": "8000",
+					"path": [
+						"search"
+					],
+					"query": [
+						{
+							"key": "q",
+							"value": ""
+						},
+						{
+							"key": "page",
+							"value": "6"
+						},
+						{
+							"key": "per_page",
+							"value": "10\n"
+						}
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "CONTACT US API ENDPOINT",
+			"request": {
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\r\n    \"name\": \"keshav\",\r\n    \"email\": \"keshav143@gmail.com\",\r\n    \"subject\": \"Need assistance\",\r\n    \"website\": \"https://example.com\",\r\n    \"message\": \"Hello, I need help with my account.\"\r\n}\r\n",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "http://127.0.0.1:8000/submit-contact/",
+					"protocol": "http",
+					"host": [
+						"127",
+						"0",
+						"0",
+						"1"
+					],
+					"port": "8000",
+					"path": [
+						"submit-contact",
+						""
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "SUBMIT QUESTION FUNCTIONALITY",
+			"request": {
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\r\n    \"text\": \"What is java?\"\r\n}\r\n",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "http://127.0.0.1:8000/submit-question/",
+					"protocol": "http",
+					"host": [
+						"127",
+						"0",
+						"0",
+						"1"
+					],
+					"port": "8000",
+					"path": [
+						"submit-question",
+						""
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "SUBMIT ANSWER FUNCTIONALITY",
+			"request": {
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\r\n    \"answer\": \"Nodejs is a programming language\"\r\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "http://127.0.0.1:8000/submit-answer/2/",
+					"protocol": "http",
+					"host": [
+						"127",
+						"0",
+						"0",
+						"1"
+					],
+					"port": "8000",
+					"path": [
+						"submit-answer",
+						"2",
+						""
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "SUBMIT REVIEW  FUNCTIONALITY",
+			"request": {
+				"auth": {
+					"type": "noauth"
+				},
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "formdata",
+					"formdata": [
+						{
+							"key": "college_name",
+							"value": "JNTUA University",
+							"type": "text"
+						},
+						{
+							"key": "other_college_name",
+							"value": "ABC University",
+							"type": "text"
+						},
+						{
+							"key": "course_name",
+							"value": "Computer Science",
+							"type": "text"
+						},
+						{
+							"key": "other_course_name",
+							"value": "Science",
+							"type": "text"
+						},
+						{
+							"key": "student_name",
+							"value": "Keshav",
+							"type": "text"
+						},
+						{
+							"key": "email",
+							"value": "keshav123@gmail.com",
+							"type": "text"
+						},
+						{
+							"key": "phone_number",
+							"value": "9959588638",
+							"type": "text"
+						},
+						{
+							"key": "gender",
+							"value": "Male",
+							"type": "text"
+						},
+						{
+							"key": "linkedin_profile",
+							"value": "https://linkedin.com/in/keshav",
+							"type": "text"
+						},
+						{
+							"key": "course_fees",
+							"value": "50000.00",
+							"type": "text"
+						},
+						{
+							"key": "year",
+							"value": "2024",
+							"type": "text"
+						},
+						{
+							"key": "referral_code",
+							"value": "REF1234",
+							"type": "text"
+						},
+						{
+							"key": "anvil_reservation_benefits",
+							"value": "true",
+							"type": "text"
+						},
+						{
+							"key": "gd_pi_admission",
+							"value": "true",
+							"type": "text"
+						},
+						{
+							"key": "class_size",
+							"value": "200",
+							"type": "text"
+						},
+						{
+							"key": "opted_hostel",
+							"value": "true",
+							"type": "text"
+						},
+						{
+							"key": "college_provides_placements",
+							"value": "true",
+							"type": "text"
+						},
+						{
+							"key": "hostel_fees",
+							"value": "20000.00",
+							"type": "text"
+						},
+						{
+							"key": "average_package",
+							"value": "700000.00",
+							"type": "text"
+						},
+						{
+							"key": "admission_process",
+							"value": "The admission process was smooth.",
+							"type": "text"
+						},
+						{
+							"key": "course_curriculum_faculty",
+							"value": "The faculty is great.",
+							"type": "text"
+						},
+						{
+							"key": "fees_structure_scholarship",
+							"value": "Scholarships available for merit students.",
+							"type": "text"
+						},
+						{
+							"key": "liked_things",
+							"value": "Great faculty, good placements.",
+							"type": "text"
+						},
+						{
+							"key": "disliked_things",
+							"value": "Expensive hostel fees.",
+							"type": "text"
+						},
+						{
+							"key": "profile_photo",
+							"type": "file",
+							"src": "postman-cloud:///1efcc27e-2524-4cd0-b0c7-8aee7052b32a"
+						},
+						{
+							"key": "campus_photos",
+							"type": "file",
+							"src": "postman-cloud:///1efcc27e-2524-4cd0-b0c7-8aee7052b32a"
+						},
+						{
+							"key": "certificate_id_card",
+							"type": "file",
+							"src": "postman-cloud:///1efcc27e-2524-4cd0-b0c7-8aee7052b32a"
+						},
+						{
+							"key": "agree_terms",
+							"value": "true",
+							"type": "text"
+						},
+						{
+							"key": "country_code",
+							"value": "IN",
+							"type": "text"
+						},
+						{
+							"key": "apply",
+							"value": "applied",
+							"type": "text"
+						},
+						{
+							"key": "benefit",
+							"value": "Benefits",
+							"type": "text"
+						},
+						{
+							"key": "graduation_certificate",
+							"type": "file",
+							"src": "postman-cloud:///1efcc27e-2524-4cd0-b0c7-8aee7052b32a"
+						}
+					]
+				},
+				"url": {
+					"raw": "http://localhost:8000/submit-review/",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "8000",
+					"path": [
+						"submit-review",
+						""
+					]
+				}
+			},
+			"response": []
+		}
+	]
+}

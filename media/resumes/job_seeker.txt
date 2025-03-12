@@ -1,0 +1,168 @@
+1) models.py ->
+
+class JobSeeker(models.Model):
+    first_name = models.CharField(max_length=30)
+    last_name = models.CharField(max_length=30)
+    email = models.EmailField(unique=True)
+    mobile_number = models.CharField(max_length=15)
+    password = models.CharField(max_length=128)
+    country_code = models.CharField(max_length=5)
+    token = models.CharField(max_length=100,default="null")
+
+
+    def __str__(self):
+      return f"{self.first_name} {self.last_name}" 
+
+2) forms.py code ->
+
+class JobSeekerRegistrationForm(forms.ModelForm):
+   class Meta:
+      model = JobSeeker
+      fields = ['first_name', 'last_name', 'email', 'mobile_number', 'password', 'country_code']
+      widgets = {
+         'password': forms.PasswordInput(),
+    }
+
+def clean_email(self):
+        email = self.cleaned_data.get('email')
+        if JobSeeker.objects.filter(email=email).exists():
+         raise forms.ValidationError("Email already in use.")
+        return email    
+
+
+3) views.py code -> 
+
+@csrf_exempt
+def register_job_seeker(request):
+    if request.method == 'POST':
+        try:
+            data = json.loads(request.body.decode('utf-8'))
+        except json.JSONDecodeError:
+            return JsonResponse({'success': False, 'errors': 'Invalid JSON'}, status=400)
+
+        form = JobSeekerRegistrationForm(data)
+        
+        if form.is_valid():
+            job_seeker = form.save(commit=False)
+            job_seeker.password = make_password(job_seeker.password)
+            job_seeker.save()
+
+            return JsonResponse({'success': True, 'message': 'Registration successful'}, status=201)
+        
+        else:
+            errors = dict(form.errors.items())
+            return JsonResponse({'success': False, 'errors': errors}, status=400)
+    
+    return JsonResponse({'success': False, 'errors': 'Only POST requests are allowed.'}, status=405)
+
+
+@csrf_exempt
+def login_job_seeker(request):
+        try:
+            data = json.loads(request.body.decode('utf-8'))
+            email = data.get('email')
+            password = data.get('password')
+           
+            if not email:
+                return JsonResponse({'error': 'Please enter an email id'}, status=400)
+            if not password:
+                return JsonResponse({'error': 'Please enter password'}, status=400)
+
+            job_seeker = JobSeeker.objects.filter(email=email).first()
+
+            if not job_seeker:
+                return JsonResponse({'error': 'Email id not found'}, status=404)
+
+            if not check_password(password, job_seeker.password):
+                return JsonResponse({'error': 'Invalid Credentials'}, status=400)
+
+            
+            unique_token = generate_unique_token()
+            job_seeker.token = unique_token
+            job_seeker.save()
+
+            return JsonResponse({
+                'message': 'login successful',
+                'unique_token': unique_token
+            }, status=200)
+
+        except json.JSONDecodeError:
+            return JsonResponse({'error': 'Invalid JSON format'}, status=400)
+        except Exception as e:
+            return JsonResponse({'error': str(e)}, status=500)
+
+
+@method_decorator(csrf_exempt, name='dispatch')
+class JobSeekerLogoutView(View):
+    def post(self, request):
+        try:
+            auth_header = request.headers.get('Authorization')
+            if not auth_header or not auth_header.startswith('Bearer '):
+                return JsonResponse({'error': 'Token is missing or invalid format'}, status=400)
+
+            token = auth_header.split(' ')[1]
+
+            job_seeker = JobSeeker.objects.filter(token=token).first()
+            if not job_seeker:
+                return JsonResponse({'error': 'Invalid token'}, status=404)
+
+            job_seeker.token = ''
+            job_seeker.save()
+
+            return JsonResponse({'success': True, 'message': 'Job Seeker logout successful'}, status=200)
+
+        except Exception as e:
+            return JsonResponse({'error': str(e)}, status=500)
+
+
+4) urls.py code ->
+
+    path('register/job-seeker/', views.register_job_seeker, name='register-job-seeker'),
+    path('login/job_seeker/', views.login_job_seeker, name='login_job_seeker'),
+    path('logout/job-seeker/', views.JobSeekerLogoutView.as_view(), name='job-seeker-logout'),
+
+
+5) Postman Request ->
+
+1) Job-Seeker Registration -> 
+
+     URL - http://localhost:8000/register/job-seeker/
+     
+     Body - 
+
+{
+    "first_name": "Mayuresh",
+    "last_name": "Kurane",
+    "email": "kuranemayuresh@gmail.com",
+    "mobile_number": "9876543212",
+    "password": "mayur@123",
+    "country_code": "+91"
+}
+
+2) Job-Seeker Login ->
+
+    URL - http://localhost:8000/login/job_seeker/
+    
+    Body - 
+
+{
+    "email":"kuranemayuresh@gmail.com",
+    "password":"mayur@123"
+}
+
+
+3) Job-Seeker Logout ->
+
+    URL - http://localhost:8000/logout/job-seeker/
+
+    * add token in a headers 
+  
+         key = Authorization
+         value = Bearer <your_token>
+
+
+
+
+
+    
+   

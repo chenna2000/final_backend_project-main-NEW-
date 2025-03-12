@@ -1,0 +1,40 @@
+@method_decorator(csrf_exempt, name='dispatch')
+class Next(View):
+    def post(self, request):
+        try:
+            data = json.loads(request.body.decode('utf-8'))
+            course = data.get('course')
+            education = data.get('education')
+            percentage = data.get('percentage')
+            preferred_destination = data.get('preferred_destination')
+            start_date = data.get('start_date')
+            mode_study = data.get('mode_study')
+            entrance_exam = data.get('entrance')
+            passport = data.get('passport')
+            country_code = data.get('country_code')
+            phone_number = data.get('phonenumber')
+            errors = {}
+            if not entrance_exam:
+                errors['entrance'] = 'Check box not clicked'
+            if not passport:
+                errors['passport'] = 'Check box not clicked'
+            if errors:
+                return JsonResponse({'success': False, 'errors': errors}, status=400)
+            us_data = fetch_data_from_google_sheets()
+            if not us_data:
+                return JsonResponse({'error': 'Failed to fetch data from Google Sheets'}, status=500)
+            sheet = us_data[-1]
+            us = new_user(
+                firstname=sheet[0], lastname=sheet[1], email=sheet[2],
+                country_code=country_code, phonenumber=phone_number,
+                password=sheet[5], course=course, education=education,
+                percentage=percentage, preferred_destination=preferred_destination,
+                start_date=start_date, mode_study=mode_study,
+                entrance=entrance_exam, passport=passport
+            )
+            us.save()
+            return JsonResponse({'message': 'Registration successful'})
+        except json.JSONDecodeError:
+            return JsonResponse({'error': 'Invalid JSON'}, status=400)
+        except Exception as e:
+            return JsonResponse({'error': str(e)}, status=500)
