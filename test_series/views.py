@@ -683,7 +683,14 @@ def submit_details(request):
 @require_GET
 def download_test_file(request, session_id):
     try:
-        user = new_user.objects.filter(token=request.headers.get('Authorization', '').split(' ')[1]).first()
+        auth_header = request.headers.get('Authorization', '')
+
+        if not auth_header.startswith('Bearer '):
+            return JsonResponse({'error': 'Missing or invalid Authorization header'}, status=403)
+
+        token = auth_header.split(' ')[1]
+        user = new_user.objects.filter(token=token).first()
+
         if not user:
             return JsonResponse({'error': 'Invalid token'}, status=403)
 
@@ -701,4 +708,3 @@ def download_test_file(request, session_id):
 
     except Exception as e:
         return JsonResponse({'error': 'Download failed', 'details': str(e)}, status=500)
-
