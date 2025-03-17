@@ -19,4 +19,6 @@ urlpatterns = [
     path('question/next/<int:session_id>/<int:current_question_no>/', views.get_next_question, name='get_next_question'),
     path('question/previous/<int:session_id>/<int:current_question_no>/', views.get_previous_question, name='get_previous_question'),
     path('submit-details/', views.submit_details, name='submit_details'),
+    path('download-test/<int:session_id>/', views.download_test_file, name='download_test_file'),
+
 ]

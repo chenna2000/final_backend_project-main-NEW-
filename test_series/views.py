@@ -13,6 +13,8 @@ from django.utils.decorators import method_decorator
 from django.views import View
 from .models import new_user
 from django.db.models import Count
+import os
+from django.utils.text import slugify
 
 def api_response(success, data=None, error=None, details=None, status=200):
     try:
@@ -677,4 +679,26 @@ def submit_details(request):
 
     except Exception as e:
         return api_response({'status': 'error', 'message': str(e)}, status=500)
+
+@require_GET
+def download_test_file(request, session_id):
+    try:
+        user = new_user.objects.filter(token=request.headers.get('Authorization', '').split(' ')[1]).first()
+        if not user:
+            return JsonResponse({'error': 'Invalid token'}, status=403)
+
+        session = get_object_or_404(ProctoringSession, id=session_id, user=user)
+        exam = session.exam
+
+        file_name = f"{slugify(exam.name)}_test_paper.pdf"
+        file_url = f"{settings.MEDIA_URL}tests/{file_name}"
+
+        file_path = os.path.join(settings.MEDIA_ROOT, 'tests', file_name)
+        if not os.path.exists(file_path):
+            return JsonResponse({'error': 'File not found', 'path': file_path}, status=404)
+
+        return JsonResponse({'success': True, 'message': 'Test Downloaded successfully', 'file_url': file_url})
+
+    except Exception as e:
+        return JsonResponse({'error': 'Download failed', 'details': str(e)}, status=500)
 
