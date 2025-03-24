@@ -1,5 +1,5 @@
 from django import forms # type: ignore
-from .models import AdmissionReview1, Contact, JobSeeker, Question, Subscriber1,Consultant,Forgot2,UniversityInCharge,Subscriber, UnregisteredColleges,Verify,Forgot,CompanyInCharge
+from .models import AdmissionReview1, Contact, JobSeeker, Question, Subscriber1,Consultant,Forgot2,UniversityInCharge,Subscriber, UnregisteredColleges,Verify,Forgot,CompanyInCharge,Answer
 
 class CompanyInChargeForm(forms.ModelForm):
     class Meta:
@@ -76,8 +76,8 @@ class QuestionForm(forms.ModelForm):
 		
 class AnswerForm(forms.ModelForm):
     class Meta:
-        model = Question
-        fields = ['answer']
+        model = Answer
+        fields = ['text']
 
 class Step1Form(forms.ModelForm):
     class Meta:

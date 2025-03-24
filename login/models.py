@@ -160,7 +160,15 @@ class Contact(models.Model):
     
 class Question(models.Model):
     text = models.TextField()
-    answer = models.TextField(blank=True, null=True)
+    # answer = models.TextField(blank=True, null=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return self.text[:50]
+    
+class Answer(models.Model):
+    question = models.ForeignKey(Question, on_delete=models.CASCADE, related_name="answers")
+    text = models.TextField()
     created_at = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):

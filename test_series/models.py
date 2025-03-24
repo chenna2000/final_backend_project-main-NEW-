@@ -65,3 +65,4 @@ class ExamParticipant(models.Model):
     phone_number = models.CharField(max_length=15)
     exam_started = models.BooleanField(default=False)
 
+

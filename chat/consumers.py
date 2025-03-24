@@ -1,12 +1,19 @@
+import email
+from email.message import EmailMessage
+from turtle import update
 from asgiref.sync import sync_to_async # type: ignore
 from django.core.exceptions import ObjectDoesNotExist # type: ignore
-from django.db.models import Q # type: ignore
+from django.db.models import Q
+import requests # type: ignore
 from .models import Message, MessageAttachment
 from login.models import JobSeeker, new_user, CompanyInCharge, UniversityInCharge # type: ignore
 from channels.generic.websocket import AsyncJsonWebsocketConsumer # type: ignore
 from dateutil import parser # type: ignore
 import json
 from channels.generic.websocket import AsyncWebsocketConsumer # type: ignore
+from django.core.mail import send_mail
+from django.conf import settings
+from .models import OnlineStatus
 
 MODEL_MAPPING = {
     "JobSeeker": JobSeeker,
@@ -95,7 +102,6 @@ async def get_attachments_for_message(message):
     except Exception as e:
         print(f"Error retrieving attachments: {e}")
         return []
-
 
 class ChatConsumer(AsyncJsonWebsocketConsumer):
     async def connect(self):
@@ -260,10 +266,21 @@ class ChatConsumer(AsyncJsonWebsocketConsumer):
                 },
             )
 
+            recipient_status = await sync_to_async(lambda: OnlineStatus.objects.filter(user__email=recipient_email).first())()
+            if not recipient_status or not recipient_status.is_online:
+                
+                await sync_to_async(send_mail)(
+                    subject="New Message Notification",
+                    message=f"You have received a new message from {sender_email}.\n\nSubject: {subject}\nMessage: {message_content}.\n\n I already sent an attachment in your dashboard message box. Please check it.",
+                    from_email=settings.DEFAULT_FROM_EMAIL,
+                    recipient_list=[recipient_email],
+                    fail_silently=True,
+                )
+
             await self.send_json({"message": "Message sent successfully", "data": response_data})
 
         except Exception as e:
-            # print(f"Error in handle_send_message: {e}")
+            print(f"Error in handle_send_message: {e}")
             await self.send_json({"error": f"An error occurred: {str(e)}"})
 
     async def chat_message(self, event):
@@ -285,8 +302,6 @@ class ChatConsumer(AsyncJsonWebsocketConsumer):
             except model_class.DoesNotExist:
                 raise ObjectDoesNotExist("User not found")
         raise ObjectDoesNotExist("Invalid email or token")
-
-
 
 class NotificationConsumer(AsyncWebsocketConsumer):
     async def connect(self):
@@ -334,4 +349,3 @@ class NotificationMessageConsumer(AsyncJsonWebsocketConsumer):
         message = event['message']
         await self.send_json({"message": message})
         
-

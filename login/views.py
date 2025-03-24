@@ -6,16 +6,15 @@ from django.views.decorators.csrf import csrf_exempt
 from .utils import (send_data_to_google_sheet3,send_data_to_google_sheet4,
 send_data_to_google_sheet2, send_data_to_google_sheet5, send_data_to_google_sheet6,send_data_to_google_sheets)
 import secrets,json # type: ignore
-from .models import CompanyInCharge, Consultant, JobSeeker, Question, UniversityInCharge, new_user
+from .models import CompanyInCharge, Consultant, JobSeeker, Question, UniversityInCharge, new_user,Question, Answer
 from django.contrib.auth.hashers import make_password, check_password # type: ignore
 from django.utils.decorators import method_decorator # type: ignore
 from django.views import View # type: ignore
-from .forms import ( AnswerForm, ContactForm, JobSeekerRegistrationForm, QuestionForm, Step1Form, Step2Form, Step3Form, Step4Form, Step5Form, Step6Form, UniversityInChargeForm,CompanyInChargeForm,ForgotForm,
+from .forms import ( ContactForm, JobSeekerRegistrationForm, QuestionForm, Step1Form, Step2Form, Step3Form, Step4Form, Step5Form, Step6Form, UniversityInChargeForm,CompanyInChargeForm,ForgotForm,
 SubscriptionForm1,ConsultantForm,Forgot2Form, UnregisteredCollegesForm
-,VerifyForm,SubscriptionForm)
+,VerifyForm,SubscriptionForm,AnswerForm)
 from django.core.mail import EmailMessage # type: ignore
 from django.utils.crypto import get_random_string # type: ignore
-
 
 #CLIENT_ID = os.getenv('GOOGLE_CLIENT_ID')
 #CLIENT_ID = os.getenv('LINKEDIN_CLIENT_ID')
@@ -1924,12 +1923,38 @@ def submit_answer(request, question_id):
         except Question.DoesNotExist:
             return JsonResponse({"error": "Question not found"}, status=404)
 
-        form = AnswerForm(data, instance=question)
+        form = AnswerForm(data)
         if form.is_valid():
-            form.save()
-            return JsonResponse({"message": "Answer saved successfully!", "id": question.id}, status=200)
+            answer = form.save(commit=False)
+            answer.question = question
+            answer.save()
+            return JsonResponse({"message": "Answer saved successfully!", "id": answer.id}, status=201)
 
         return JsonResponse({"error": "Invalid data", "details": form.errors}, status=400)
+
+    return JsonResponse({"error": "Invalid request method"}, status=405)
+
+
+def get_all_questions(request):
+    """Fetch all questions"""
+    if request.method == "GET":
+        questions = Question.objects.values("id", "text", "created_at")
+        return JsonResponse({"questions": list(questions)}, status=200)
+
+    return JsonResponse({"error": "Invalid request method"}, status=405)
+
+def get_all_answers(request):
+    """Fetch all answers grouped by question"""
+    if request.method == "GET":
+        questions = Question.objects.prefetch_related("answers").values("id", "text")
+        data = []
+
+        for q in questions:
+            answers = Answer.objects.filter(question_id=q["id"]).values("id", "text", "created_at")
+            q["answers"] = list(answers)
+            data.append(q)
+
+        return JsonResponse({"questions": data}, status=200)
 
     return JsonResponse({"error": "Invalid request method"}, status=405)
 
