@@ -1,10 +1,6 @@
-import email
-from email.message import EmailMessage
-from turtle import update
 from asgiref.sync import sync_to_async # type: ignore
 from django.core.exceptions import ObjectDoesNotExist # type: ignore
 from django.db.models import Q
-import requests # type: ignore
 from .models import Message, MessageAttachment
 from login.models import JobSeeker, new_user, CompanyInCharge, UniversityInCharge # type: ignore
 from channels.generic.websocket import AsyncJsonWebsocketConsumer # type: ignore
@@ -70,17 +66,28 @@ def save_attachments(message, attachments):
     return saved_attachments
 
 
+# @sync_to_async
+# def get_user_from_db(model_class, email, token_optional=False):
+#     if token_optional or email:
+#         try:
+#             if hasattr(model_class, "email"):
+#                 return model_class.objects.get(email=email)
+#             else:
+#                 return model_class.objects.get(official_email=email)
+#         except model_class.DoesNotExist:
+#             raise ObjectDoesNotExist("User not found")
+#     raise ObjectDoesNotExist("Invalid email or token")
+
 @sync_to_async
 def get_user_from_db(model_class, email, token_optional=False):
     if token_optional or email:
         try:
-            if hasattr(model_class, "email"):
-                return model_class.objects.get(email=email)
-            else:
-                return model_class.objects.get(official_email=email)
+            email_field = "email" if hasattr(model_class, "email") else "official_email"
+            return model_class.objects.get(**{email_field: email})
         except model_class.DoesNotExist:
             raise ObjectDoesNotExist("User not found")
     raise ObjectDoesNotExist("Invalid email or token")
+
 
 
 async def get_attachments_for_message(message):
@@ -103,33 +110,49 @@ async def get_attachments_for_message(message):
         print(f"Error retrieving attachments: {e}")
         return []
 
+
+@sync_to_async
+def set_online_status(user_email, is_online, user_model):
+    try:
+        if not user_email:
+            # print("Invalid email provided for online status update.")
+            return None
+
+        status, created = OnlineStatus.objects.update_or_create(
+            email=user_email,
+            defaults={'is_online': is_online}
+        )
+        # print(f"User online status updated: {user_email} -> {is_online}")
+        return status  
+
+    except Exception as e:
+        # print(f"Error in set_online_status: {e}")
+        return None
+    
+
 class ChatConsumer(AsyncJsonWebsocketConsumer):
     async def connect(self):
         self.user_email = self.scope["url_route"]["kwargs"].get("user_email")
         self.user_model = self.scope["url_route"]["kwargs"].get("user_model")
 
         if not self.user_model or self.user_model not in MODEL_MAPPING:
-            # print(f"Invalid user model: {self.user_model}")
             await self.close(code=4001)
             return
 
         try:
             model_class = MODEL_MAPPING[self.user_model]
             self.user = await get_user_from_db(model_class, self.user_email, token_optional=True)
+            await set_online_status(self.user_email, is_online=True, user_model=self.user_model)
         except ObjectDoesNotExist:
-            # print(f"User not found: {self.user_email} ({self.user_model})")
             await self.close(code=4002)
             return
 
         self.group_name = f"user_{self.user_email.replace('@', '_at_').replace('.', '_dot_')}"
-        # print(f"User {self.user_email} connected to group {self.group_name}")
-
-        # Join the group
         await self.channel_layer.group_add(self.group_name, self.channel_name)
         await self.accept()
 
     async def disconnect(self, code):
-        # print(f"User {self.user_email} disconnected with code {code}")
+        await set_online_status(self.user_email, is_online=False, user_model=self.user_model)
         await self.channel_layer.group_discard(self.group_name, self.channel_name)
 
     async def receive_json(self, content):
@@ -163,11 +186,7 @@ class ChatConsumer(AsyncJsonWebsocketConsumer):
                 since_dt = parser.parse(since_timestamp)
                 messages_query = messages_query.filter(timestamp__gt=since_dt)
 
-            # print("All Messages => ", messages_query)
-            # Get all the messages (not just the latest one)
             messages = await sync_to_async(list)(messages_query)
-
-            # print("Messages => " , messages)
 
             if messages:
                 message_data = []
@@ -185,10 +204,10 @@ class ChatConsumer(AsyncJsonWebsocketConsumer):
                         "attachments": attachments,
                     })
 
-                await self.send_json(json.loads(json.dumps({
+                await self.send_json({
                     "message": "Messages retrieved successfully",
                     "data": message_data,
-                }, ensure_ascii=False)))
+                })
             else:
                 await self.send_json({
                     "message": "No messages found",
@@ -196,10 +215,7 @@ class ChatConsumer(AsyncJsonWebsocketConsumer):
                 })
 
         except Exception as e:
-            # print(f"Error in handle_get_messages: {e}")
             await self.send_json({"error": f"An error occurred: {str(e)}"})
-
-
 
     async def handle_send_message(self, content):
         sender_email = self.user_email
@@ -239,16 +255,15 @@ class ChatConsumer(AsyncJsonWebsocketConsumer):
 
             response_data = {
                 "id": message.id,
-               "sender_email": sender_email,
-               "recipient_email": recipient_email,
-               "subject": message.subject,
-               "content": message.content,
-               "attachments": attachment_details,
-               "timestamp": message.timestamp.isoformat(),
+                "sender_email": sender_email,
+                "recipient_email": recipient_email,
+                "subject": message.subject,
+                "content": message.content,
+                "attachments": attachment_details,
+                "timestamp": message.timestamp.isoformat(),
             }
 
             recipient_group = f"user_{recipient_email.replace('@', '_at_').replace('.', '_dot_')}"
-            # print("Response data: ", response_data)
             await self.channel_layer.group_send(
                 recipient_group,
                 {
@@ -266,12 +281,25 @@ class ChatConsumer(AsyncJsonWebsocketConsumer):
                 },
             )
 
-            recipient_status = await sync_to_async(lambda: OnlineStatus.objects.filter(user__email=recipient_email).first())()
-            if not recipient_status or not recipient_status.is_online:
+            recipient_status = await sync_to_async(lambda: OnlineStatus.objects.filter(email=recipient_email).first())()
+
+            if recipient_status is None or not recipient_status.is_online:
+                # print(f"Recipient {recipient_email} online status: {recipient_status}")
                 
+                email_content = f"You have received a new message from {sender_email}.\n\n"
+
+                if subject:
+                    email_content += f"Subject: {subject}\n"
+
+                email_content += f"Message: {message_content}\n"
+
+                if attachment_details:
+                    attachment_filenames = "\n".join([attachment["original_name"] for attachment in attachment_details])
+                    email_content += f"\nAttachments:\n{attachment_filenames}"
+
                 await sync_to_async(send_mail)(
                     subject="New Message Notification",
-                    message=f"You have received a new message from {sender_email}.\n\nSubject: {subject}\nMessage: {message_content}.\n\n I already sent an attachment in your dashboard message box. Please check it.",
+                    message=email_content,
                     from_email=settings.DEFAULT_FROM_EMAIL,
                     recipient_list=[recipient_email],
                     fail_silently=True,
@@ -280,7 +308,7 @@ class ChatConsumer(AsyncJsonWebsocketConsumer):
             await self.send_json({"message": "Message sent successfully", "data": response_data})
 
         except Exception as e:
-            print(f"Error in handle_send_message: {e}")
+            # print(f"Error in handle_send_message: {e}")
             await self.send_json({"error": f"An error occurred: {str(e)}"})
 
     async def chat_message(self, event):
@@ -302,6 +330,7 @@ class ChatConsumer(AsyncJsonWebsocketConsumer):
             except model_class.DoesNotExist:
                 raise ObjectDoesNotExist("User not found")
         raise ObjectDoesNotExist("Invalid email or token")
+
 
 class NotificationConsumer(AsyncWebsocketConsumer):
     async def connect(self):
@@ -348,4 +377,4 @@ class NotificationMessageConsumer(AsyncJsonWebsocketConsumer):
     async def send_notification(self, event):
         message = event['message']
         await self.send_json({"message": message})
-        
+    

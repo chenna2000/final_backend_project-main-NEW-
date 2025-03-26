@@ -1,6 +1,7 @@
 from django.db import models # type: ignore
 from django.contrib.auth.models import User # type: ignore
 from django.utils.timezone import now # type: ignore
+from login.models import JobSeeker, new_user, CompanyInCharge, UniversityInCharge # type: ignore
 
 
 class Message(models.Model):
@@ -43,10 +44,10 @@ class MessageAttachment(models.Model):
 
 
 class OnlineStatus(models.Model):
-    user = models.OneToOneField(User, on_delete=models.CASCADE, related_name="online_status")
+    email = models.EmailField(unique=True, default="unknown@example.com")
     is_online = models.BooleanField(default=False)
     last_seen = models.DateTimeField(default=now)
 
     def __str__(self):
-        return f"{self.user.username} - {'Online' if self.is_online else 'Offline'}"
+        return f"{self.email} - {'Online' if self.is_online else 'Offline'}"
 
