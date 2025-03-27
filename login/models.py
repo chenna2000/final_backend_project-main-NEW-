@@ -1,6 +1,5 @@
 from django.contrib.auth.models import AbstractUser # type: ignore
 from django.db import models # type: ignore
-from django.contrib.auth.models import User
 
 
 class CustomUser(AbstractUser):
@@ -47,6 +46,7 @@ class new_user(models.Model):
     token = models.CharField(max_length=255, blank=True, null=True)
     is_deleted = models.BooleanField(default=False)
     agreed_to_terms = models.BooleanField(default=True)
+    is_online = models.BooleanField(default=False)
 
 
 class Meta:
@@ -63,6 +63,8 @@ class CompanyInCharge(models.Model):
     company_person_name = models.CharField(max_length=255,default="Null")
     agreed_to_terms = models.BooleanField(default=True)
     token = models.CharField(max_length=255, blank=True, null=True)
+    is_online = models.BooleanField(default=False)
+
     # otp_code = models.CharField(max_length=6, blank=True, null=True)
     # otp_generated_at = models.DateTimeField(blank=True, null=True)
 
@@ -85,6 +87,7 @@ class UniversityInCharge(models.Model):
     college_person_name = models.CharField(max_length=255,default="Null")
     agreed_to_terms = models.BooleanField(default=True)
     token = models.CharField(max_length=255, blank=True, null=True)
+    is_online = models.BooleanField(default=False)
     # trimmed_university_name = models.CharField(max_length=255, default='N/A')
     # otp_code = models.CharField(max_length=6, blank=True, null=True)
     # otp_generated_at = models.DateTimeField(blank=True, null=True)
@@ -106,6 +109,7 @@ class Consultant(models.Model):
     consultant_person_name = models.CharField(max_length=255,default="Null")
     agreed_to_terms = models.BooleanField(default=True)
     token = models.CharField(max_length=255, blank=True, null=True)
+    is_online = models.BooleanField(default=False)
 
 class Subscriber(models.Model):
     email = models.EmailField(unique=True)
@@ -136,6 +140,7 @@ class JobSeeker(models.Model):
     country_code = models.CharField(max_length=5)
     token = models.CharField(max_length=255, blank=True, null=True)
     agreed_to_terms = models.BooleanField(default=True)
+    is_online = models.BooleanField(default=False)
     # otp_code = models.CharField(max_length=6, blank=True, null=True)
     # otp_generated_at = models.DateTimeField(blank=True, null=True)
 

@@ -3,18 +3,20 @@ from django.core.mail import send_mail # type: ignore
 from django.conf import settings # type: ignore
 from django.middleware.csrf import get_token # type: ignore
 from django.views.decorators.csrf import csrf_exempt
+from chat.models import OnlineStatus
 from .utils import (send_data_to_google_sheet3,send_data_to_google_sheet4,
 send_data_to_google_sheet2, send_data_to_google_sheet5, send_data_to_google_sheet6,send_data_to_google_sheets)
 import secrets,json # type: ignore
-from .models import CompanyInCharge, Consultant, JobSeeker, Question, UniversityInCharge, new_user,Question, Answer
+from .models import Answer, CompanyInCharge, Consultant, JobSeeker, Question, UniversityInCharge, new_user
 from django.contrib.auth.hashers import make_password, check_password # type: ignore
 from django.utils.decorators import method_decorator # type: ignore
 from django.views import View # type: ignore
-from .forms import ( ContactForm, JobSeekerRegistrationForm, QuestionForm, Step1Form, Step2Form, Step3Form, Step4Form, Step5Form, Step6Form, UniversityInChargeForm,CompanyInChargeForm,ForgotForm,
+from .forms import (AnswerForm, ContactForm, JobSeekerRegistrationForm, QuestionForm, Step1Form, Step2Form, Step3Form, Step4Form, Step5Form, Step6Form, UniversityInChargeForm,CompanyInChargeForm,ForgotForm,
 SubscriptionForm1,ConsultantForm,Forgot2Form, UnregisteredCollegesForm
-,VerifyForm,SubscriptionForm,AnswerForm)
+,VerifyForm,SubscriptionForm)
 from django.core.mail import EmailMessage # type: ignore
 from django.utils.crypto import get_random_string # type: ignore
+
 
 #CLIENT_ID = os.getenv('GOOGLE_CLIENT_ID')
 #CLIENT_ID = os.getenv('LINKEDIN_CLIENT_ID')
@@ -135,7 +137,10 @@ class Login(View):
 
             unique_token = generate_unique_token()
             user.token = unique_token
+            user.is_online = True
             user.save()
+
+            OnlineStatus.objects.filter(email=user.email).update(is_online=True)
 
             return JsonResponse({
                 'message': 'Login successful',
@@ -171,7 +176,6 @@ class Forgot_view(View):
                 EMAIL = forgot.email
 
                 user = new_user.objects.filter(email=EMAIL).first()
-
                 if not user:
                     return JsonResponse({'error': 'Email does not exist'}, status=404)
 
@@ -274,7 +278,6 @@ class ResendOtpView(View):
                 return JsonResponse({'error': 'CSRF token missing'}, status=403)
 
             email = request.session.get('email')
-            
             if not email:
                 return JsonResponse({'error': 'Email not found in session'}, status=400)
 
@@ -372,7 +375,10 @@ class StudentLogoutView(View):
                 return JsonResponse({'error': 'Invalid token'}, status=404)
 
             student_user.token = None
+            student_user.is_online = False
             student_user.save()
+
+            OnlineStatus.objects.filter(email=student_user.email).update(is_online=False)
 
             return JsonResponse({'success': True, 'message': 'Student logout successful'}, status=200)
 
@@ -652,7 +658,10 @@ class LoginCompanyInChargeView(View):
             if check_password(password, company.password):
                 token = generate_unique_token()
                 company.token = token
+                company.is_online = True
                 company.save()
+
+                OnlineStatus.objects.filter(email=company.official_email).update(is_online=True)
 
                 send_mail(
                     subject='Login Successful',
@@ -695,7 +704,10 @@ class LoginUniversityInChargeView(View):
             if check_password(password, university.password):
                 token = generate_unique_token()
                 university.token = token
+                university.is_online = True
                 university.save()
+
+                OnlineStatus.objects.filter(email=university.official_email).update(is_online=True)
 
                 send_mail(
                     subject='Login Successful',
@@ -738,6 +750,7 @@ class LoginConsultantView(View):
             if check_password(password, consultant.password):
                 token = generate_unique_token()
                 consultant.token = token
+                consultant.is_online = True
                 consultant.save()
 
                 send_mail(
@@ -819,7 +832,10 @@ class LogoutCompanyInChargeView(View):
                 return JsonResponse({'error': 'Invalid token'}, status=404)
 
             company.token = None
+            company.is_online = False
             company.save()
+
+            OnlineStatus.objects.filter(email=company.official_email).update(is_online=False)
 
             return JsonResponse({'success': True, 'message': 'Company Logout successful'}, status=200)
 
@@ -842,7 +858,10 @@ class LogoutUniversityView(View):
                 return JsonResponse({'error': 'Invalid token'}, status=404)
 
             university.token = None
+            university.is_online = False
             university.save()
+
+            OnlineStatus.objects.filter(email=university.official_email).update(is_online=False)
 
             return JsonResponse({'success': True, 'message': 'College Logout successful'}, status=200)
 
@@ -872,6 +891,7 @@ class LogoutConsultantView(View):
                 return JsonResponse({'error': 'Invalid token'}, status=404)
 
             consultant.token = None
+            consultant.is_online = False
             consultant.save()
 
             return JsonResponse({'success': True, 'message': 'Logout successful'}, status=200)
@@ -895,7 +915,10 @@ class LoginJobSeekerView(View):
             if check_password(password, job_seeker.password):
                 token = generate_unique_token()
                 job_seeker.token = token
+                job_seeker.is_online = True
                 job_seeker.save()
+                
+                OnlineStatus.objects.filter(email=job_seeker.email).update(is_online=True)
 
                 send_mail(
                     subject='Login Successful',
@@ -935,7 +958,10 @@ class JobSeekerLogoutView(View):
                 return JsonResponse({'error': 'Invalid token'}, status=404)
 
             job_seeker.token = None
+            job_seeker.is_online = False
             job_seeker.save()
+
+            OnlineStatus.objects.filter(email=job_seeker.email).update(is_online=False)
 
             return JsonResponse({'success': True, 'message': 'Logout successful'}, status=200)
 
@@ -1085,6 +1111,9 @@ class ChangePasswordConsultantView(View):
                 return JsonResponse({'error': 'All fields are required'}, status=400)
             if new_password != confirm_password:
                 return JsonResponse({'error': 'Passwords do not match'}, status=400)
+            
+            if old_password == new_password:
+                return JsonResponse({'error': 'New password cannot be the same as the old password'}, status=400)
 
             consultant = Consultant.objects.filter(official_email=email, token=token).first()
             if not consultant :
@@ -1865,6 +1894,10 @@ class ResetPasswordConsultantView(View):
             consultant = Consultant.objects.filter(official_email=stored_email).first()
 
             if consultant:
+                if check_password(password, consultant.password):
+                    return JsonResponse({'error': 'New password cannot be the same as the current password'}, status=400)
+
+            if consultant:
                 consultant.password = make_password(password)
                 consultant.save()
                 del request.session['email']
@@ -1934,7 +1967,6 @@ def submit_answer(request, question_id):
 
     return JsonResponse({"error": "Invalid request method"}, status=405)
 
-
 def get_all_questions(request):
     """Fetch all questions"""
     if request.method == "GET":
@@ -1957,6 +1989,7 @@ def get_all_answers(request):
         return JsonResponse({"questions": data}, status=200)
 
     return JsonResponse({"error": "Invalid request method"}, status=405)
+
 
 @csrf_exempt
 def submit_admission_review(request):

@@ -143,6 +143,7 @@ class ChatConsumer(AsyncJsonWebsocketConsumer):
             model_class = MODEL_MAPPING[self.user_model]
             self.user = await get_user_from_db(model_class, self.user_email, token_optional=True)
             await set_online_status(self.user_email, is_online=True, user_model=self.user_model)
+            await sync_to_async(lambda: OnlineStatus.objects.filter(email=self.user_email).update(is_online=True))() #
         except ObjectDoesNotExist:
             await self.close(code=4002)
             return
@@ -153,7 +154,9 @@ class ChatConsumer(AsyncJsonWebsocketConsumer):
 
     async def disconnect(self, code):
         await set_online_status(self.user_email, is_online=False, user_model=self.user_model)
+        await sync_to_async(lambda: OnlineStatus.objects.filter(email=self.user_email).update(is_online=False))()
         await self.channel_layer.group_discard(self.group_name, self.channel_name)
+        
 
     async def receive_json(self, content):
         action = content.get("action")
