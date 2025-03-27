@@ -1,5 +1,5 @@
 from django.contrib import admin # type: ignore
-from .models import  Achievements, Advertisement, Application, CollegeAdvertisement, CollegeMembership, CollegeScreeningAnswer, CollegeScreeningQuestion, CompanyScreeningAnswer, CompanyScreeningQuestion,  Education,  Certification, College, CollegeEnquiry, Job, Company,JobSeeker_Achievements, JobSeeker_Certification, JobSeeker_Education, JobSeeker_Experience, JobSeeker_Objective, JobSeeker_Project, JobSeeker_Publications, JobSeeker_Reference, JobSeeker_Resume, Membership, Publications, Resume, Project, Objective, Experience, Reference, Application1, Job1, StudentEnquiry, Visitor
+from .models import  Achievements, Advertisement, Application, CollegeAdvertisement, CollegeMembership, CollegeScreeningAnswer, CollegeScreeningQuestion, CompanyScreeningAnswer, CompanyScreeningQuestion,  Education,  Certification, College, CollegeEnquiry, Job, Company,JobSeeker_Achievements, JobSeeker_Certification, JobSeeker_Education, JobSeeker_Experience, JobSeeker_Objective, JobSeeker_Project, JobSeeker_Publications, JobSeeker_Reference, JobSeeker_Resume, Membership, Publications, Resume, Project, Objective, Experience, Reference, Application1, Job1, StudentEnquiry, Visitor, Candidate1Status_selected, CandidateStatus_rejected, CandidateStatus_not_eligible, Candidate1Status_under_review, CandidateStatus_selected, Candidate1Status_rejected, Candidate1Status_not_eligible, CandidateStatus_under_review, Student, Interview, SavedJob, SavedJobForNewUser, new_user_enquiry
 
 admin.site.register(Job)
 admin.site.register(Application)
@@ -36,3 +36,16 @@ admin.site.register(Membership)
 admin.site.register(CollegeMembership)
 admin.site.register(Advertisement)
 admin.site.register(CollegeAdvertisement)
+admin.site.register(CandidateStatus_under_review)
+admin.site.register(CandidateStatus_not_eligible)
+admin.site.register(CandidateStatus_selected)
+admin.site.register(CandidateStatus_rejected)
+admin.site.register(Candidate1Status_selected)
+admin.site.register(Candidate1Status_rejected)
+admin.site.register(Candidate1Status_not_eligible)
+admin.site.register(Candidate1Status_under_review)
+admin.site.register(Student)
+admin.site.register(Interview)
+admin.site.register(SavedJob)
+admin.site.register(SavedJobForNewUser)
+admin.site.register(new_user_enquiry)

@@ -1,8 +1,6 @@
 from django.db import models # type: ignore
 from django.contrib.auth.models import User # type: ignore
 from django.utils.timezone import now # type: ignore
-from login.models import JobSeeker, new_user, CompanyInCharge, UniversityInCharge # type: ignore
-
 
 class Message(models.Model):
     sender_email = models.EmailField()
