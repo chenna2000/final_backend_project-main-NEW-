@@ -1,15 +1,18 @@
+from turtle import update
 from asgiref.sync import sync_to_async # type: ignore
 from django.core.exceptions import ObjectDoesNotExist # type: ignore
-from django.db.models import Q
+from django.db.models import Q # type: ignore
+import requests # type: ignore
 from .models import Message, MessageAttachment
 from login.models import JobSeeker, new_user, CompanyInCharge, UniversityInCharge # type: ignore
 from channels.generic.websocket import AsyncJsonWebsocketConsumer # type: ignore
 from dateutil import parser # type: ignore
 import json
 from channels.generic.websocket import AsyncWebsocketConsumer # type: ignore
-from django.core.mail import send_mail
-from django.conf import settings
+from django.core.mail import send_mail # type: ignore
+from django.conf import settings # type: ignore
 from .models import OnlineStatus
+from django.utils.timezone import now # type: ignore
 
 MODEL_MAPPING = {
     "JobSeeker": JobSeeker,
@@ -114,20 +117,22 @@ async def get_attachments_for_message(message):
 @sync_to_async
 def set_online_status(user_email, is_online, user_model):
     try:
+        # Ensure the email is valid
         if not user_email:
-            # print("Invalid email provided for online status update.")
+            print("Invalid email provided for online status update.")
             return None
 
         status, created = OnlineStatus.objects.update_or_create(
             email=user_email,
             defaults={'is_online': is_online}
         )
-        # print(f"User online status updated: {user_email} -> {is_online}")
+        print(f"User online status updated: {user_email} -> {is_online}")
         return status  
 
     except Exception as e:
-        # print(f"Error in set_online_status: {e}")
+        print(f"Error in set_online_status: {e}")
         return None
+
     
 
 class ChatConsumer(AsyncJsonWebsocketConsumer):
@@ -143,7 +148,6 @@ class ChatConsumer(AsyncJsonWebsocketConsumer):
             model_class = MODEL_MAPPING[self.user_model]
             self.user = await get_user_from_db(model_class, self.user_email, token_optional=True)
             await set_online_status(self.user_email, is_online=True, user_model=self.user_model)
-            await sync_to_async(lambda: OnlineStatus.objects.filter(email=self.user_email).update(is_online=True))() #
         except ObjectDoesNotExist:
             await self.close(code=4002)
             return
@@ -154,9 +158,7 @@ class ChatConsumer(AsyncJsonWebsocketConsumer):
 
     async def disconnect(self, code):
         await set_online_status(self.user_email, is_online=False, user_model=self.user_model)
-        await sync_to_async(lambda: OnlineStatus.objects.filter(email=self.user_email).update(is_online=False))()
         await self.channel_layer.group_discard(self.group_name, self.channel_name)
-        
 
     async def receive_json(self, content):
         action = content.get("action")
@@ -287,7 +289,7 @@ class ChatConsumer(AsyncJsonWebsocketConsumer):
             recipient_status = await sync_to_async(lambda: OnlineStatus.objects.filter(email=recipient_email).first())()
 
             if recipient_status is None or not recipient_status.is_online:
-                # print(f"Recipient {recipient_email} online status: {recipient_status}")
+                print(f"Recipient {recipient_email} online status: {recipient_status}")
                 
                 email_content = f"You have received a new message from {sender_email}.\n\n"
 
@@ -311,7 +313,7 @@ class ChatConsumer(AsyncJsonWebsocketConsumer):
             await self.send_json({"message": "Message sent successfully", "data": response_data})
 
         except Exception as e:
-            # print(f"Error in handle_send_message: {e}")
+            print(f"Error in handle_send_message: {e}")
             await self.send_json({"error": f"An error occurred: {str(e)}"})
 
     async def chat_message(self, event):
@@ -334,30 +336,42 @@ class ChatConsumer(AsyncJsonWebsocketConsumer):
                 raise ObjectDoesNotExist("User not found")
         raise ObjectDoesNotExist("Invalid email or token")
 
+# class NotificationConsumer(AsyncWebsocketConsumer):
+#     async def connect(self):
+#         self.email = self.scope['url_route']['kwargs']['email']  # Fix variable name
+#         self.group_name = f"notifications_{self.email.replace('@', '_at_').replace('.', '_dot_')}"
 
-class NotificationConsumer(AsyncWebsocketConsumer):
-    async def connect(self):
-        self.token = self.scope['url_route']['kwargs']['token']
-        self.group_name = f"notifications_{self.token}"
+#         # Join the group
+#         await self.channel_layer.group_add(
+#             self.group_name,
+#             self.channel_name,
+#         )
 
-        # Join the group
-        await self.channel_layer.group_add(
-            self.group_name,
-            self.channel_name,
-        )
+#         # User is online
+#         await self.update_online_status(self.email, True)
 
-        await self.accept()
+#         await self.accept()
 
-    async def disconnect(self, close_code):
-        await self.channel_layer.group_discard(
-            self.group_name,
-            self.channel_name,
-        )
+#     async def disconnect(self, close_code):
+#         # User is offline
+#         await self.update_online_status(self.email, False)
 
-    async def send_notification(self, event):
-        message = event['message']
+#         await self.channel_layer.group_discard(
+#             self.group_name,
+#             self.channel_name,
+#         )
 
-        await self.send(text_data=json.dumps({"message": message}))
+#     async def send_notification(self, event):
+#         message = event['message']
+#         await self.send(text_data=json.dumps({"message": message}))
+
+#     @sync_to_async
+#     def update_online_status(self, email, status):
+#         OnlineStatus.objects.update_or_create(
+#             email=email,
+#             defaults={"is_online": status, "last_seen": now()},
+#         )
+
 
 class NotificationMessageConsumer(AsyncJsonWebsocketConsumer):
     async def connect(self):
@@ -369,9 +383,15 @@ class NotificationMessageConsumer(AsyncJsonWebsocketConsumer):
             self.channel_name,
         )
 
+        # User is online
+        await self.update_online_status(self.recipient_email, True)
+
         await self.accept()
 
     async def disconnect(self, close_code):
+        # User is offline
+        await self.update_online_status(self.recipient_email, False)
+
         await self.channel_layer.group_discard(
             self.group_name,
             self.channel_name,
@@ -380,4 +400,11 @@ class NotificationMessageConsumer(AsyncJsonWebsocketConsumer):
     async def send_notification(self, event):
         message = event['message']
         await self.send_json({"message": message})
+
+    @sync_to_async
+    def update_online_status(self, email, status):
+        OnlineStatus.objects.update_or_create(
+            email=email,
+            defaults={"is_online": status, "last_seen": now()},
+        )
     

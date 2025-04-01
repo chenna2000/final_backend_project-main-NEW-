@@ -10,7 +10,7 @@ from login.models import CompanyInCharge, JobSeeker, UniversityInCharge, new_use
 from .models import Advertisement, Application, Application1, CollegeAdvertisement, CollegeMembership, CollegeScreeningAnswer, CollegeScreeningQuestion, CompanyScreeningAnswer, CompanyScreeningQuestion, Membership, Candidate1Status_not_eligible, Candidate1Status_rejected, Candidate1Status_selected, Candidate1Status_under_review, CandidateStatus_not_eligible, JobSeeker_Resume, CandidateStatus_rejected, CandidateStatus_selected, CandidateStatus_under_review, College, CollegeEnquiry, Interview, Job, Company, Job1, Resume, SavedJobForNewUser, Student, StudentEnquiry, Visitor, SavedJob, new_user_enquiry
 from .forms import AchievementForm, AdvertisementForm, AdvertisementForm1, Application1Form, ApplicationForm,CertificationForm, CollegeForm, CompanyForm, EducationForm, ExperienceForm, Job1Form, JobForm, JobseekerAchievementForm, JobseekerCertificationForm, JobseekerEducationForm, JobseekerExperienceForm, JobseekerObjectiveForm, JobseekerProjectForm, JobseekerPublicationForm, JobseekerReferenceForm, JobseekerResumeForm, MembershipForm, MembershipForm1,  ObjectiveForm, ProjectForm, PublicationForm, ReferenceForm, ResumeForm, StudentForm, VisitorRegistrationForm
 import json, operator
-from datetime import datetime, timedelta
+from datetime import timedelta
 from django.utils.decorators import method_decorator # type: ignore
 from django.views import View # type: ignore
 from functools import reduce
@@ -1413,6 +1413,7 @@ def create_job_alert(request):
 
     return JsonResponse({'error': 'Invalid request method'}, status=405)
 
+
 @csrf_exempt
 def company_status_counts(request, company_in_charge_id):
     if request.method != 'GET':
@@ -1483,7 +1484,8 @@ def company_status_counts(request, company_in_charge_id):
         return JsonResponse({'error': 'Company not found'}, status=404)
     except Exception as e:
         return JsonResponse({'error': str(e)}, status=500)
-
+    
+    
 @csrf_exempt
 def jobs_by_company(request, company_in_charge_id):
     try:
@@ -1902,6 +1904,8 @@ def get_user_enquiries(request, user_id):
         return JsonResponse({'error': str(e)}, status=500)
 
 
+from datetime import datetime
+
 @csrf_exempt
 def college_status_counts(request, university_in_charge_id):
     auth_header = request.headers.get('Authorization')
@@ -1973,7 +1977,7 @@ def college_status_counts(request, university_in_charge_id):
 
     except Exception as e:
         return JsonResponse({'error': str(e)}, status=500)
-
+    
 @csrf_exempt
 def create_job_for_college(request, university_incharge_id):
 
@@ -4285,6 +4289,7 @@ def get_application_details(request, company_in_charge_id):
 #     except json.JSONDecodeError:
 #         return JsonResponse({'error': 'Invalid JSON'}, status=400)
 
+
 # @csrf_exempt
 # def update_company_application_status(request, company_in_charge_id, application_id):
 #     auth_header = request.headers.get('Authorization')
@@ -4312,56 +4317,61 @@ def get_application_details(request, company_in_charge_id):
 #         application.status = app_status
 #         application.save()
 
-#         ############################ Send Notifications Code
+#         ############################ Send Notifications Code ############################
 #         channel_layer = get_channel_layer()
+        
+#         company_email = company_in_charge.official_email.replace('@', '_at_').replace('.', '_dot_')
+#         notification_group = f"notifications_{company_email}"
+        
+#         notification_message = f"Application status for {application.first_name} {application.last_name} updated to {application.status} by {company_in_charge.company_name}"
 
 #         async_to_sync(channel_layer.group_send)(
-#             f"notifications_{company_in_charge.token}",
-#             {
-#                 "type": "send_notification",
-#                 "message": f"Application status for {application.first_name} {application.last_name} updated to {application.status} by {company_in_charge.company_name}",
-#             },
+#             notification_group,
+#             {"type": "send_notification", "message": notification_message},
 #         )
 
-#         # Track recipient emails
-#         recipient_emails = []
-
-#         # Send notifications to job_seeker
 #         if application.job_seeker:
-#             job_seeker_email = application.job_seeker.email
-#             async_to_sync(channel_layer.group_send)(
-#                 f"notifications_{application.job_seeker.token}",
+#             job_seeker = application.job_seeker
+#             jobseeker_email = job_seeker.email.replace('@', '_at_').replace('.', '_dot_')
+#             recipient_status = OnlineStatus.objects.filter(email=job_seeker.email).first()
+#             job_seeker_group = f"notifications_{jobseeker_email}"
+            
+#             if recipient_status and recipient_status.is_online:
+#                 async_to_sync(channel_layer.group_send)(
+#                 job_seeker_group,
 #                 {
 #                     "type": "send_notification",
 #                     "message": f"Your application for {application.job.job_title} has been updated to {application.status} by {company_in_charge.company_name}",
 #                 },
 #             )
-#             recipient_emails.append(job_seeker_email)
-
-#         # Send notifications to user
-#         if application.user:
-#             user_email = application.user.email
-#             async_to_sync(channel_layer.group_send)(
-#                 f"notifications_{application.user.token}",
-#                 {
-#                     "type": "send_notification",
-#                     "message": f"Your application for {application.job.job_title} has been updated to {application.status} by {company_in_charge.company_name}",
-#                 },
-#             )
-#             recipient_emails.append(user_email)
-
-#         # Check online status for each recipient before sending an email
-#         for email in recipient_emails:
-#             recipient_status = OnlineStatus.objects.filter(user__email=email).first()
-#             print("recipient_status ", recipient_status)
-
-#             if not recipient_status or not recipient_status.check_online:
+#             else:
 #                 send_mail(
-#                     subject="New Application Status Update",
-#                     message=f"Your application for {application.job.job_title} has been updated to {application.status} by {company_in_charge.company_name}. Please check your dashboard for more details.",
+#                     subject="Application Status Update",
+#                     message=f"Dear {job_seeker.first_name} {job_seeker.last_name},\n\nYour application for {application.job.job_title} has been updated to {application.status} by {company_in_charge.company_name}.\n\nHR Team\n{company_in_charge.company_name}",
 #                     from_email=settings.DEFAULT_FROM_EMAIL,
-#                     recipient_list=[email],
-#                     fail_silently=True,
+#                     recipient_list=[job_seeker.email],
+#                 )
+
+#         if application.user:
+#             user = application.user
+#             user_email = user.email.replace('@', '_at_').replace('.', '_dot_')
+#             recipent_status = OnlineStatus.objects.filter(email=user_email).first()
+#             user_group = f"notifications_{user_email}"
+             
+#             if recipent_status and recipent_status.is_online:
+#                 async_to_sync(channel_layer.group_send)(
+#                 user_group,
+#                 {
+#                     "type": "send_notification",
+#                     "message": f"Your application for {application.job.job_title} has been updated to {application.status} by {company_in_charge.company_name}",
+#                 },
+#             )
+#             else:
+#                 send_mail(
+#                     subject="Application Status Update",
+#                     message=f"Dear {user.firstname} {user.lastname},\n\nYour application for {application.job.job_title} has been updated to {application.status} by {company_in_charge.company_name}.\n\nBest Regards,\nHR Team\n{company_in_charge.company_name}",
+#                     from_email=settings.DEFAULT_FROM_EMAIL,
+#                     recipient_list=[user.email],
 #                 )
 
 #         return JsonResponse({'message': 'Application status updated successfully'}, status=200)
@@ -4398,20 +4408,31 @@ def update_company_application_status(request, company_in_charge_id, application
 
         ############################ Send Notifications Code ############################
         channel_layer = get_channel_layer()
-
+        
+        company_email = company_in_charge.official_email.replace('@', '_at_').replace('.', '_dot_')
+        notification_group = f"notifications_{company_email}"
+        
         notification_message = f"Application status for {application.first_name} {application.last_name} updated to {application.status} by {company_in_charge.company_name}"
 
         async_to_sync(channel_layer.group_send)(
-            f"notifications_{company_in_charge.token}",
+            notification_group,
             {"type": "send_notification", "message": notification_message},
         )
 
+        # Notify job seeker
         if application.job_seeker:
             job_seeker = application.job_seeker
-            if job_seeker.is_online:
+            jobseeker_email = job_seeker.email.replace('@', '_at_').replace('.', '_dot_')
+            recipient_status = OnlineStatus.objects.filter(email=job_seeker.email).first()
+            job_seeker_group = f"notifications_{jobseeker_email}"
+            
+            if recipient_status and recipient_status.is_online:
                 async_to_sync(channel_layer.group_send)(
-                    f"notifications_{job_seeker.token}",
-                    {"type": "send_notification", "message": f"Your application for {application.job.job_title} has been updated to {application.status} by {company_in_charge.company_name}"},
+                    job_seeker_group,
+                    {
+                        "type": "send_notification",
+                        "message": f"Your application for {application.job.job_title} has been updated to {application.status} by {company_in_charge.company_name}",
+                    },
                 )
             else:
                 send_mail(
@@ -4421,12 +4442,20 @@ def update_company_application_status(request, company_in_charge_id, application
                     recipient_list=[job_seeker.email],
                 )
 
+        # Notify user (if different from job_seeker)
         if application.user:
             user = application.user
-            if user.is_online:
+            user_email = user.email.replace('@', '_at_').replace('.', '_dot_')
+            recipient_status = OnlineStatus.objects.filter(email=user.email).first()
+            user_group = f"notifications_{user_email}"
+             
+            if recipient_status and recipient_status.is_online:
                 async_to_sync(channel_layer.group_send)(
-                    f"notifications_{user.token}",
-                    {"type": "send_notification", "message": f"Your application for {application.job.job_title} has been updated to {application.status} by {company_in_charge.company_name}"},
+                    user_group,
+                    {
+                        "type": "send_notification",
+                        "message": f"Your application for {application.job.job_title} has been updated to {application.status} by {company_in_charge.company_name}",
+                    },
                 )
             else:
                 send_mail(
@@ -4440,6 +4469,7 @@ def update_company_application_status(request, company_in_charge_id, application
 
     except json.JSONDecodeError:
         return JsonResponse({'error': 'Invalid JSON'}, status=400)
+
 
 
 # @csrf_exempt
@@ -4534,19 +4564,30 @@ def update_college_application_status(request, university_in_charge_id, applicat
         ############################ Send Notifications Code ############################
         channel_layer = get_channel_layer()
         
+        college_email = university_in_charge.official_email.replace('@', '_at_').replace('.', '_dot_')
+        notification_group = f"notifications_{college_email}"
+        
         notification_message = f"Application status for {application.first_name} {application.last_name} updated to {application.status} by {university_in_charge.university_name}"
 
         async_to_sync(channel_layer.group_send)(
-            f"notifications_{university_in_charge.token}",
+            notification_group,
             {"type": "send_notification", "message": notification_message},
         )
 
+        # Notify job seeker
         if application.job_seeker:
             job_seeker = application.job_seeker
-            if job_seeker.is_online:
+            jobseeker_email = job_seeker.email.replace('@', '_at_').replace('.', '_dot_')
+            recipient_status = OnlineStatus.objects.filter(email=job_seeker.email).first()
+            job_seeker_group = f"notifications_{jobseeker_email}"
+            
+            if recipient_status and recipient_status.is_online:
                 async_to_sync(channel_layer.group_send)(
-                    f"notifications_{job_seeker.token}",
-                    {"type": "send_notification", "message": f"Your application for {application.job.job_title} has been updated to {application.status} by {university_in_charge.university_name}"},
+                    job_seeker_group,
+                    {
+                        "type": "send_notification",
+                        "message": f"Your application for {application.job.job_title} has been updated to {application.status} by {university_in_charge.university_name}",
+                    },
                 )
             else:
                 send_mail(
@@ -4556,12 +4597,20 @@ def update_college_application_status(request, university_in_charge_id, applicat
                     recipient_list=[job_seeker.email],
                 )
 
+        # Notify user (if different from job_seeker)
         if application.user:
             user = application.user
-            if user.is_online:
+            user_email = user.email.replace('@', '_at_').replace('.', '_dot_')
+            recipient_status = OnlineStatus.objects.filter(email=user.email).first()
+            user_group = f"notifications_{user_email}"
+             
+            if recipient_status and recipient_status.is_online:
                 async_to_sync(channel_layer.group_send)(
-                    f"notifications_{user.token}",
-                    {"type": "send_notification", "message": f"Your application for {application.job.job_title} has been updated to {application.status} by {university_in_charge.university_name}"},
+                    user_group,
+                    {
+                        "type": "send_notification",
+                        "message": f"Your application for {application.job.job_title} has been updated to {application.status} by {university_in_charge.university_name}",
+                    },
                 )
             else:
                 send_mail(
@@ -4670,6 +4719,64 @@ def unsave_job(request):
             return JsonResponse({'error': str(e)}, status=500)
 
     return JsonResponse({'error': 'Invalid HTTP method'}, status=405)
+
+# @csrf_exempt
+# def fetch_saved_jobs(request, jobseeker_id):
+#     if request.method == 'GET':
+#         try:
+#             auth_header = request.headers.get('Authorization', '')
+#             token = auth_header.split(' ')[1] if auth_header.startswith('Bearer ') else None
+
+#             if not token:
+#                 return JsonResponse({'error': 'Token is missing or invalid format'}, status=400)
+
+#             jobseeker = JobSeeker.objects.filter(token=token, id=jobseeker_id).first()
+#             if not jobseeker:
+#                 return JsonResponse({'error': 'Invalid token or JobSeeker not found'}, status=404)
+
+#             saved_jobs = SavedJob.objects.filter(jobseeker=jobseeker).select_related('job', 'job1')
+
+#             if not saved_jobs:
+#                 return JsonResponse({'message': 'No saved jobs found'}, status=200)
+
+#             saved_jobs_data = []
+
+#             for saved_job in saved_jobs:
+#                 job_data = None
+#                 job1_data = None
+
+#                 if saved_job.job:
+#                     job_data = {
+#                         'job_id': saved_job.original_job_id,
+#                         'job_title': saved_job.job.job_title,
+#                         'company': saved_job.job.company.name,
+#                         'location': saved_job.job.location,
+#                         'job_type': saved_job.job.job_type,
+#                         'skills': saved_job.job.skills,
+#                         'job_status': saved_job.job.job_status,
+#                     }
+#                 elif saved_job.job1:
+#                     job1_data = {
+#                         'job1_id': saved_job.job1.id,
+#                         'job_title': saved_job.job1.job_title,
+#                         'university': saved_job.job1.college.college_name,
+#                         'location': saved_job.job1.location,
+#                         'job_type': saved_job.job1.job_type,
+#                         'skills': saved_job.job1.skills,
+#                         'job_status': saved_job.job1.job_status,
+#                     }
+
+#                 if job_data:
+#                     saved_jobs_data.append({'job': job_data})
+#                 elif job1_data:
+#                     saved_jobs_data.append({'job1': job1_data})
+
+#             return JsonResponse({'saved_jobs': saved_jobs_data}, status=200)
+
+#         except Exception as e:
+#             return JsonResponse({'error': str(e)}, status=500)
+
+#     return JsonResponse({'error': 'Invalid HTTP method'}, status=405)
 
 @csrf_exempt
 def fetch_saved_jobs(request, jobseeker_id):
@@ -4829,6 +4936,63 @@ def unsave_job_new_user(request):
 
     return JsonResponse({'error': 'Invalid HTTP method'}, status=405)
 
+# @csrf_exempt
+# def fetch_saved_jobs_new_user(request, new_user_id):
+#     if request.method == 'GET':
+#         try:
+#             auth_header = request.headers.get('Authorization', '')
+#             token = auth_header.split(' ')[1] if auth_header.startswith('Bearer ') else None
+
+#             if not token:
+#                 return JsonResponse({'error': 'Token is missing or invalid format'}, status=400)
+
+#             user = new_user.objects.filter(token=token, id=new_user_id).first()
+#             if not user:
+#                 return JsonResponse({'error': 'Invalid token or New User not found'}, status=404)
+
+#             saved_jobs = SavedJobForNewUser.objects.filter(new_user=user).select_related('job', 'job1')
+
+#             if not saved_jobs:
+#                 return JsonResponse({'message': 'No saved jobs found for this New User'}, status=200)
+
+#             saved_jobs_data = []
+#             for saved_job in saved_jobs:
+#                 job_data = None
+#                 job1_data = None
+
+#                 if saved_job.job:
+#                     job_data = {
+#                         'job_id': saved_job.original_job_id,
+#                         'job_title': saved_job.job.job_title,
+#                         'company': saved_job.job.company.name,
+#                         'location': saved_job.job.location,
+#                         'job_type': saved_job.job.job_type,
+#                         'skills': saved_job.job.skills,
+#                         'job_status': saved_job.job.job_status,
+#                     }
+#                 elif saved_job.job1:
+#                     job1_data = {
+#                         'job1_id': saved_job.job1.id,
+#                         'job_title': saved_job.job1.job_title,
+#                         'university': saved_job.job1.college.college_name,
+#                         'location': saved_job.job1.location,
+#                         'job_type': saved_job.job1.job_type,
+#                         'skills': saved_job.job1.skills,
+#                         'job_status': saved_job.job1.job_status,
+#                     }
+
+#                 if job_data:
+#                     saved_jobs_data.append({'job': job_data})
+#                 elif job1_data:
+#                     saved_jobs_data.append({'job1': job1_data})
+
+#             return JsonResponse({'saved_jobs': saved_jobs_data}, status=200)
+
+#         except Exception as e:
+#             return JsonResponse({'error': str(e)}, status=500)
+
+#     return JsonResponse({'error': 'Invalid HTTP method'}, status=405)
+
 @csrf_exempt
 def fetch_saved_jobs_new_user(request, new_user_id):
     if request.method == 'GET':
@@ -4891,6 +5055,235 @@ def fetch_saved_jobs_new_user(request, new_user_id):
             return JsonResponse({'error': str(e)}, status=500)
 
     return JsonResponse({'error': 'Invalid HTTP method'}, status=405)
+
+# @csrf_exempt
+# def update_company_job(request, company_in_charge_id, job_id):
+#     if request.method not in ['PUT', 'GET', 'DELETE']:
+#         return JsonResponse({'error': 'Only GET, PUT, or DELETE methods are allowed'}, status=405)
+
+#     auth_header = request.headers.get('Authorization')
+#     if not auth_header or not auth_header.startswith('Bearer '):
+#         return JsonResponse({'error': 'Token is missing or in an invalid format'}, status=400)
+
+#     token = auth_header.split(' ')[1]
+
+#     try:
+#         company_in_charge = CompanyInCharge.objects.get(token=token, id=company_in_charge_id)
+#     except CompanyInCharge.DoesNotExist:
+#         return JsonResponse({'error': 'Invalid token or company in charge not found'}, status=401)
+
+#     try:
+#         job = Job.objects.get(unique_job_id_as_int=job_id, company_in_charge=company_in_charge)
+#     except Job.DoesNotExist:
+#         return JsonResponse({'error': 'Job not found'}, status=404)
+
+#     if request.method == 'GET':
+#         return JsonResponse({
+#                     'id': job.id,
+#                     'job_title': job.job_title,
+#                     'company': job.company.name,
+#                     'location': job.location,
+#                     'requirements': job.requirements,
+#                     'job_type': job.job_type,
+#                     'experience': job.experience,
+#                     'category': job.category,
+#                     # 'published_at': job.published_at,
+#                     'skills': job.skills,
+#                     'workplaceTypes': job.workplaceTypes,
+#                     'description': job.description,
+#                     'experience_yr': job.experience_yr,
+#                     'source': job.source,
+#                     # "unique_job_id_as_int": job.unique_job_id_as_int
+#                 }, status=200)
+
+#     elif request.method == 'DELETE':
+#         job.delete()
+#         return JsonResponse({'message': 'Job deleted successfully'}, status=200)
+
+#     elif request.method == 'PUT':
+#         try:
+#             data = json.loads(request.body)
+#         except json.JSONDecodeError:
+#             return JsonResponse({'error': 'Invalid JSON'}, status=400)
+
+#         company_name = data.get('company')
+#         if not company_name:
+#             return JsonResponse({'error': 'Company name is required'}, status=400)
+
+#         try:
+#             company = Company.objects.get(name=company_name, company_in_charge=company_in_charge)
+#         except Company.DoesNotExist:
+#             return JsonResponse({'error': f'Company with name "{company_name}" does not exist'}, status=404)
+
+#         job_skills = data.get('skills', '')
+#         if job_skills:
+#             unique_job_list = list(set(job_skills.split(', ')))
+#             data['skills'] = ', '.join(unique_job_list)
+
+#         data['company'] = company.id
+#         data['company_in_charge'] = company_in_charge.id
+
+#         form = JobForm(data, instance=job)
+#         if form.is_valid():
+#             try:
+#                 job = form.save(commit=False)
+#                 job.company = company
+#                 job.company_in_charge = company_in_charge
+#                 job.save()
+#                 return JsonResponse({'message': 'Job updated successfully'}, status=200)
+#             except Exception as e:
+#                 return JsonResponse({'error': f'Error updating job: {str(e)}'}, status=500)
+#         else:
+#             return JsonResponse({'errors': form.errors}, status=400)
+
+# @csrf_exempt
+# def update_college_job(request, university_incharge_id, job_id):
+#     if request.method not in ['PUT', 'GET', 'DELETE']:
+#         return JsonResponse({'error': 'Only GET, PUT, or DELETE methods are allowed'}, status=405)
+
+#     auth_header = request.headers.get('Authorization')
+#     if not auth_header or not auth_header.startswith('Bearer '):
+#         return JsonResponse({'error': 'Token is missing or in an invalid format'}, status=400)
+
+#     token = auth_header.split(' ')[1]
+
+#     try:
+#         university_in_charge = UniversityInCharge.objects.get(token=token, id=university_incharge_id)
+#     except UniversityInCharge.DoesNotExist:
+#         return JsonResponse({'error': 'Invalid token or university in charge not found'}, status=401)
+
+#     try:
+#         job = Job1.objects.get(id=job_id, university_in_charge=university_in_charge)
+#     except Job1.DoesNotExist:
+#         return JsonResponse({'error': 'Job not found'}, status=404)
+
+#     if request.method == 'GET':
+#         return JsonResponse({
+#                     'id': job.id,
+#                     'job_title': job.job_title,
+#                     'company': job.college.college_name,
+#                     'location': job.location,
+#                     'requirements': job.requirements,
+#                     'job_type': job.job_type,
+#                     'experience': job.experience,
+#                     'category': job.category,
+#                     'published_at': job.published_at,
+#                     'skills': job.skills,
+#                     'workplaceTypes': job.workplaceTypes,
+#                     'description': job.description,
+#                     'experience_yr': job.experience_yr,
+#                     'source': job.source,
+#                 }, status=200)
+
+#     elif request.method == 'DELETE':
+#         job.delete()
+#         return JsonResponse({'message': 'Job deleted successfully'}, status=200)
+
+#     elif request.method == 'PUT':
+#         try:
+#             data = json.loads(request.body)
+#         except json.JSONDecodeError:
+#             return JsonResponse({'error': 'Invalid JSON'}, status=400)
+
+#         college_id = data.get('college')
+#         if not college_id:
+#             return JsonResponse({'error': 'College ID is required'}, status=400)
+
+#         try:
+#             college = College.objects.get(id=college_id, university_in_charge=university_in_charge)
+#         except College.DoesNotExist:
+#             return JsonResponse({'error': 'College not found'}, status=404)
+
+#         job_skills = data.get('skills', '')
+#         if job_skills:
+#             unique_job_list = list(set(job_skills.split(', ')))
+#             data['skills'] = ', '.join(unique_job_list)
+
+#         data['college'] = college.id
+#         data['university_in_charge'] = university_in_charge.id
+
+#         form = Job1Form(data, instance=job)
+#         if form.is_valid():
+#             try:
+#                 job = form.save(commit=False)
+#                 job.college = college
+#                 job.university_in_charge = university_in_charge
+#                 job.save()
+#                 return JsonResponse({'message': 'Job updated successfully'}, status=200)
+#             except Exception as e:
+#                 return JsonResponse({'error': f'Error updating job: {str(e)}'}, status=500)
+#         else:
+#             return JsonResponse({'errors': form.errors}, status=400)
+
+# @csrf_exempt
+# def change_company_job_status(request, company_in_charge_id, job_id):
+#     if request.method != "POST":
+#         return JsonResponse({'error': 'Invalid request method'}, status=405)
+
+#     auth_header = request.headers.get('Authorization')
+#     if not auth_header or not auth_header.startswith('Bearer '):
+#         return JsonResponse({'error': 'Token is missing or in an invalid format'}, status=400)
+
+#     token = auth_header.split(' ')[1]
+
+#     try:
+#         company_in_charge = CompanyInCharge.objects.get(token=token, id=company_in_charge_id)
+#     except CompanyInCharge.DoesNotExist:
+#         return JsonResponse({'error': 'Invalid token or company in charge not found'}, status=401)
+
+#     try:
+#         data = json.loads(request.body)
+#     except json.JSONDecodeError:
+#         return JsonResponse({'error': 'Invalid JSON format'}, status=400)
+
+#     job_status = data.get("job_status")
+    
+#     valid_statuses = ["active", "closed"]
+#     if not job_status or job_status not in valid_statuses:
+#         return JsonResponse({'error': 'Valid job_status is required'}, status=400)
+
+#     try:
+#         job = Job.objects.get(unique_job_id_as_int=job_id, company_in_charge=company_in_charge)
+#         job.job_status = job_status
+#         job.save()
+#         return JsonResponse({'message': 'Job status updated successfully', 'job_id': job_id, 'status': job_status}, status=200)
+#     except Job.DoesNotExist:
+#         return JsonResponse({'error': 'Job not found'}, status=404)
+
+# @csrf_exempt
+# def change_college_job_status(request, university_incharge_id, job_id):
+#     if request.method != "POST":
+#         return JsonResponse({'error': 'Invalid request method'}, status=405)
+
+#     auth_header = request.headers.get('Authorization')
+#     if not auth_header or not auth_header.startswith('Bearer '):
+#         return JsonResponse({'error': 'Token is missing or in an invalid format'}, status=400)
+
+#     token = auth_header.split(' ')[1]
+
+#     try:
+#         university_in_charge = UniversityInCharge.objects.get(token=token, id=university_incharge_id)
+#     except UniversityInCharge.DoesNotExist:
+#         return JsonResponse({'error': 'Invalid token or university in charge not found'}, status=401)
+
+#     try:
+#         data = json.loads(request.body)
+#     except json.JSONDecodeError:
+#         return JsonResponse({'error': 'Invalid JSON format'}, status=400)
+
+#     job_status = data.get("job_status")
+    
+#     valid_statuses = ["active", "closed"]
+#     if not job_status or job_status not in valid_statuses:
+#         return JsonResponse({'error': 'Valid job_status is required'}, status=400)
+
+#     try:
+#         job = Job1.objects.get(id=job_id, university_in_charge=university_in_charge)
+#         job.job_status = job_status
+#         job.save()
+#         return JsonResponse({'message': 'Job status updated successfully', 'job_id': job_id, 'status': job_status}, status=200)
+#     except Job1.DoesNotExist:
+#         return JsonResponse({'error': 'Job not found'}, status=404)
 
 @csrf_exempt
 def update_company_job(request, company_in_charge_id, job_id):
@@ -5100,6 +5493,274 @@ def change_college_job_status(request, university_incharge_id, job_id):
         return JsonResponse({'message': 'Job status updated successfully', 'job_id': job_id, 'status': job_status}, status=200)
     except Job1.DoesNotExist:
         return JsonResponse({'error': 'Job not found'}, status=404)
+
+
+## new
+# @csrf_exempt
+# def submit_enquiry(request, id, collegeName):
+#     if request.method != 'POST':
+#         return JsonResponse({'error': 'Invalid request method'}, status=405)
+
+#     try:
+#         data = json.loads(request.body)
+#         print("College Name =>> ", collegeName)
+
+#         short_clg_name = " ".join(collegeName.split()[:2]) if len(collegeName.split()) > 1 else collegeName
+#         print("Short College Name =>> ", short_clg_name)
+
+#         formatted_college_name = re.sub(r'[^a-zA-Z0-9]', '', collegeName).lower()
+#         formatted_college_name1 = formatted_college_name[:30]
+
+#         if short_clg_name.startswith(('IIT', 'IIIT', 'NIT', 'IIM')):
+#             university_incharge = UniversityInCharge.objects.filter(trimmed_university_name=short_clg_name).first()
+#             final_college_name = short_clg_name 
+#         else:
+#             university_incharge = UniversityInCharge.objects.filter(trimmed_university_name=formatted_college_name1).first()
+#             final_college_name = formatted_college_name1
+        
+#         required_fields = ["firstname", "lastname", "email", "country_code", "mobile_number", "course"]
+#         missing_fields = [field for field in required_fields if not data.get(field)]
+#         if missing_fields:
+#             return JsonResponse({'error': 'All fields are required', 'missing_fields': missing_fields}, status=400)
+
+#         email = data['email']
+#         user = new_user.objects.filter(email=email).first()
+
+#         if new_user_enquiry.objects.filter(clg_id=id, email=email).exists():
+#             return JsonResponse({'error': 'An enquiry has already been submitted for this college with this email.'}, status=400)
+
+#         enquiry = new_user_enquiry.objects.create(
+#             first_name=data['firstname'],
+#             last_name=data['lastname'],
+#             email=email,
+#             country_code=data['country_code'],
+#             mobile_number=data['mobile_number'],
+#             course=data['course'],
+#             clg_id=id,
+#             collegeName=final_college_name,
+#             new_user=user,
+#             university_in_charge=university_incharge
+#         )
+
+#         return JsonResponse({
+#             'message': 'Enquiry submitted successfully',
+#             'enquiry_id': enquiry.id
+#         }, status=201)
+
+#     except json.JSONDecodeError:
+#         return JsonResponse({'error': 'Invalid JSON'}, status=400)
+#     except IntegrityError:
+#         return JsonResponse({'error': 'Error while saving data. Please try again.'}, status=500)
+#     except Exception as e:
+#         return JsonResponse({'error': f'An unexpected error occurred: {str(e)}'}, status=500)
+
+# @csrf_exempt
+# def submit_enquiry(request, id, collegeName):
+#     if request.method != 'POST':
+#         return JsonResponse({'error': 'Invalid request method'}, status=405)
+
+#     try:
+#         data = json.loads(request.body)
+#         print("College Name =>> ", collegeName)
+
+#         words = collegeName.split()
+#         filtered_words = [word for word in words if not (word.startswith("(") and word.endswith(")"))]
+#         print("filtered_words =>>", filtered_words)
+
+#         if len(filtered_words) > 1:
+#             short_clg_name = " ".join(filtered_words[:2])
+#         elif filtered_words:
+#             short_clg_name = filtered_words[0]
+#         else:
+#             short_clg_name = collegeName
+
+#         print("Short College Name =>> ", short_clg_name)
+
+#         formatted_college_name = re.sub(r'[^a-zA-Z0-9]', '', collegeName).lower()
+#         formatted_college_name1 = formatted_college_name[:30]
+
+#         if short_clg_name.startswith(('IIT', 'IIIT', 'NIT', 'IIM')):
+#             university_incharge = UniversityInCharge.objects.filter(trimmed_university_name=short_clg_name).first()
+#             final_college_name = short_clg_name 
+#         else:
+#             university_incharge = UniversityInCharge.objects.filter(trimmed_university_name=formatted_college_name1).first()
+#             final_college_name = formatted_college_name1
+        
+#         required_fields = ["firstname", "lastname", "email", "country_code", "mobile_number", "course"]
+#         missing_fields = [field for field in required_fields if not data.get(field)]
+#         if missing_fields:
+#             return JsonResponse({'error': 'All fields are required', 'missing_fields': missing_fields}, status=400)
+
+#         email = data['email']
+#         user = new_user.objects.filter(email=email).first()
+
+#         if new_user_enquiry.objects.filter(clg_id=id, email=email).exists():
+#             return JsonResponse({'error': 'An enquiry has already been submitted for this college with this email.'}, status=400)
+
+#         enquiry = new_user_enquiry.objects.create(
+#             first_name=data['firstname'],
+#             last_name=data['lastname'],
+#             email=email,
+#             country_code=data['country_code'],
+#             mobile_number=data['mobile_number'],
+#             course=data['course'],
+#             clg_id=id,
+#             collegeName=final_college_name,
+#             new_user=user,
+#             university_in_charge=university_incharge
+#         )
+
+#         return JsonResponse({
+#             'message': 'Enquiry submitted successfully',
+#             'enquiry_id': enquiry.id
+#         }, status=201)
+
+#     except json.JSONDecodeError:
+#         return JsonResponse({'error': 'Invalid JSON'}, status=400)
+#     except IntegrityError:
+#         return JsonResponse({'error': 'Error while saving data. Please try again.'}, status=500)
+#     except Exception as e:
+#         return JsonResponse({'error': f'An unexpected error occurred: {str(e)}'}, status=500)
+
+
+# @csrf_exempt
+# def submit_enquiry(request, id, collegeName):
+#     if request.method != 'POST':
+#         return JsonResponse({'error': 'Invalid request method'}, status=405)
+
+#     try:
+#         data = json.loads(request.body)
+#         print("College Name =>>", collegeName)
+
+#         formatted_college_name = re.sub(r'\(.*?\)|\[.*?\]', '', collegeName)
+#         formatted_college_name = re.sub(r'[^a-zA-Z ]', '', formatted_college_name).strip().lower()
+#         # formatted_college_name1 = formatted_college_name[:30]
+
+#         print("Formatted Name:", formatted_college_name)
+
+#         college_data = Colleges_Location.objects.all()
+
+#         iit_locations = {college.iit_locations.lower() for college in college_data if college.iit_locations}
+#         iiit_locations = {college.iiit_locations.lower() for college in college_data if college.iiit_locations}
+#         nit_locations = {college.nit_locations.lower() for college in college_data if college.nit_locations}
+#         iim_locations = {college.iim_locations.lower() for college in college_data if college.iim_locations}
+
+#         final_college_name = formatted_college_name
+#         university_incharge = None
+
+#         if formatted_college_name.startswith("iit"):
+#             matching_loc = next((loc for loc in iit_locations if loc in formatted_college_name), None)
+#             if matching_loc:
+#                 final_college_name = f'IIT {matching_loc.title()}'
+#         elif formatted_college_name.startswith("iiit"):
+#             matching_loc = next((loc for loc in iiit_locations if loc in formatted_college_name), None)
+#             if matching_loc:
+#                 final_college_name = f'IIIT {matching_loc.title()}'
+#         elif formatted_college_name.startswith("nit"):
+#             matching_loc = next((loc for loc in nit_locations if loc in formatted_college_name), None)
+#             if matching_loc:
+#                 final_college_name = f'NIT {matching_loc.title()}'
+#         elif formatted_college_name.startswith("iim"):
+#             matching_loc = next((loc for loc in iim_locations if loc in formatted_college_name), None)
+#             if matching_loc:
+#                 final_college_name = f'IIM {matching_loc.title()}'
+
+#         university_incharge = UniversityInCharge.objects.filter(trimmed_university_name=final_college_name).first()
+
+#         required_fields = ["firstname", "lastname", "email", "country_code", "mobile_number", "course"]
+#         missing_fields = [field for field in required_fields if not data.get(field)]
+#         if missing_fields:
+#             return JsonResponse({'error': 'All fields are required', 'missing_fields': missing_fields}, status=400)
+
+#         email = data['email']
+#         user = new_user.objects.filter(email=email).first()
+
+#         if new_user_enquiry.objects.filter(clg_id=id, email=email).exists():
+#             return JsonResponse({'error': 'An enquiry has already been submitted for this college with this email.'}, status=400)
+
+#         enquiry = new_user_enquiry.objects.create(
+#             first_name=data['firstname'],
+#             last_name=data['lastname'],
+#             email=email,
+#             country_code=data['country_code'],
+#             mobile_number=data['mobile_number'],
+#             course=data['course'],
+#             clg_id=id,
+#             collegeName=final_college_name,
+#             new_user=user,
+#             university_in_charge=university_incharge
+#         )
+
+#         return JsonResponse({
+#             'message': 'Enquiry submitted successfully',
+#             'enquiry_id': enquiry.id
+#         }, status=201)
+
+#     except json.JSONDecodeError:
+#         return JsonResponse({'error': 'Invalid JSON'}, status=400)
+#     except IntegrityError:
+#         return JsonResponse({'error': 'Error while saving data. Please try again.'}, status=500)
+#     except Exception as e:
+#         return JsonResponse({'error': f'An unexpected error occurred: {str(e)}'}, status=500)
+
+# @csrf_exempt
+# def submit_enquiry(request, id, collegeName):
+#     if request.method != 'POST':
+#         return JsonResponse({'error': 'Invalid request method'}, status=405)
+
+#     try:
+#         data = json.loads(request.body)
+#         print("College Name =>>", collegeName)
+
+#         formatted_college_name = collegeName.strip()
+#         formatted_college_name = re.sub(r'\(.*?\)|\[.*?\]', '', formatted_college_name).strip()
+
+#         formatted_college_name = re.sub(r'[^a-zA-Z0-9]', '', formatted_college_name).lower()
+#         print("Formatted Name:", formatted_college_name)
+#         if not formatted_college_name:
+#             return JsonResponse({'error': 'Invalid formatted college name'}, status=400)
+
+#         university_incharge = UniversityInCharge.objects.filter(trimmed_university_name=formatted_college_name).first()
+
+#         required_fields = ["firstname", "lastname", "email", "country_code", "mobile_number", "course"]
+#         missing_fields = [field for field in required_fields if not data.get(field)]
+#         if missing_fields:
+#             return JsonResponse({'error': 'All fields are required', 'missing_fields': missing_fields}, status=400)
+
+#         email = data['email'].strip()
+#         if not email:
+#             return JsonResponse({'error': 'Email is required'}, status=400)
+
+#         user = new_user.objects.filter(email=email).first()
+
+#         if new_user_enquiry.objects.filter(clg_id=id, email=email).exists():
+#             return JsonResponse({'error': 'An enquiry has already been submitted for this college with this email.'}, status=400)
+
+#         enquiry = new_user_enquiry.objects.create(
+#             first_name=data['firstname'].strip(),
+#             last_name=data['lastname'].strip(),
+#             email=email,
+#             country_code=data['country_code'].strip(),
+#             mobile_number=data['mobile_number'].strip(),
+#             course=data['course'].strip(),
+#             clg_id=id,
+#             collegeName=formatted_college_name,
+#             new_user=user,
+#             university_in_charge=university_incharge
+#         )
+
+#         return JsonResponse({
+#             'message': 'Enquiry submitted successfully',
+#             'enquiry_id': enquiry.id
+#         }, status=201)
+
+#     except json.JSONDecodeError:
+#         return JsonResponse({'error': 'Invalid JSON'}, status=400)
+#     except IntegrityError:
+#         return JsonResponse({'error': 'Error while saving data. Please try again.'}, status=500)
+#     except Exception as e:
+#         return JsonResponse({'error': f'An unexpected error occurred: {str(e)}'}, status=500)
+
 
 @csrf_exempt
 def submit_enquiry(request, id):
